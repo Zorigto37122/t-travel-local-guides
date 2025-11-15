@@ -1,13 +1,18 @@
+from typing import Optional
+
 from fastapi_users import schemas
 
 
 class UserRead(schemas.BaseUser[int]):
-    pass
+    phone: Optional[str]
+    name: str
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    phone: Optional[str]
+    name: str
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    phone: Optional[str]
+    name: str
