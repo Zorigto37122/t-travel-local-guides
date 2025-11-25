@@ -21,11 +21,12 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     ports:
       - "8000:8000"
     env_file:
       - pg.env
+      - secrets.env
     networks:
       - app-network
 
@@ -35,7 +36,7 @@ services:
       - pg.env
     environment:
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "5433:5432"
