@@ -5,10 +5,14 @@ services:
       image: postgres:15
       env_file:
         - ./pg.env
+      # environment:
+      #   POSTGRES_USER: ${DB_USER}
+      #   POSTGRES_PASSWORD: ${DB_PASS}
+      #   POSTGRES_DB: ${DB_NAME}
       environment:
-        POSTGRES_USER: ${DB_USER}
-        POSTGRES_PASSWORD: ${DB_PASS}
-        POSTGRES_DB: ${DB_NAME}
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: puppet88
+        POSTGRES_DB: fastapi
       ports:
         - "5433:5432"
       volumes:
@@ -21,8 +25,10 @@ services:
       context: ./backend
     depends_on:
       - db
+    # environment:
+    #   DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     environment:
-      DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      DATABASE_URL: postgresql+psycopg2://${postgres}:${puppet88}@${db}:${5432}/${fastapi}
     ports:
       - "8000:8000"
     env_file:
