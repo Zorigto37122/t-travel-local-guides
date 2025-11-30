@@ -33,3 +33,25 @@ class BookingResponse(BaseModel):
     payment: PaymentInBooking
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BookingInNot(BaseModel):
+    booking_id: int
+    date: datetime
+    number_of_people: int
+    status: str
+    payment_status: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotResponse(BaseModel):
+    notification_id: int
+    receiver: str
+    message: str
+    date: datetime
+    type: str
+
+    booking: BookingInNot
+
+    model_config = ConfigDict(from_attributes=True)

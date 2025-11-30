@@ -7,8 +7,8 @@ from sqlalchemy.orm import joinedload
 
 from src.auth.dependencies import current_user
 from src.database.dependencies import get_session
-from src.models import Client, Booking
-from src.schemas.client import BookingResponse
+from src.models import Client, Booking, Notification
+from src.schemas.client import BookingResponse, NotResponse
 
 router = APIRouter()
 
@@ -44,3 +44,31 @@ async def get_bookings(
         raise HTTPException(status_code=500, detail=f"Ошибка при получении броней: {str(e)}")
 
 
+@router.get("/notifications", response_model=List[NotResponse])
+async def get_bookings(
+        user=Depends(current_user),
+        session: AsyncSession = Depends(get_session)
+):
+    try:
+        stmt_client = select(Client).where(Client.user_id == user.id)
+        result_client = await session.execute(stmt_client)
+        client = result_client.scalar_one_or_none()
+
+        if not client:
+            return []
+
+        stmt_nots = (
+            select(Notification)
+            .options(
+                joinedload(Notification.booking)
+            )
+            .where(Notification.client_id == client.client_id)
+            .order_by(Notification.date.desc())
+        )
+
+        result_nots = await session.execute(stmt_nots)
+        nots = result_nots.scalars().unique().all()
+        return nots
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при получении уведомлений: {str(e)}")
