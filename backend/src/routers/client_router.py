@@ -45,7 +45,7 @@ async def get_bookings(
 
 
 @router.get("/notifications", response_model=List[NotResponse])
-async def get_bookings(
+async def get_notifications(
         user=Depends(current_user),
         session: AsyncSession = Depends(get_session)
 ):
