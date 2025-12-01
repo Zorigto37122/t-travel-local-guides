@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import ExcursionCard from "../ExcursionCard/ExcursionCard";
 import "./SearchPage.css";
 
 const SearchPage = () => {
