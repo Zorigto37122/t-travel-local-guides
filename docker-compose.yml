@@ -1,18 +1,59 @@
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+  db:
+      image: postgres:15
+      env_file:
+        - ./pg.env
+      # environment:
+      #   POSTGRES_USER: ${DB_USER}
+      #   POSTGRES_PASSWORD: ${DB_PASS}
+      #   POSTGRES_DB: ${DB_NAME}
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: puppet88
+        POSTGRES_DB: fastapi
+      ports:
+        - "5433:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      networks:
+        - app-network
 
   backend:
     build:
       context: ./backend
+    depends_on:
+      - db
+    # environment:
+    #   DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:puppet88@db:5432/fastapi
     ports:
       - "8000:8000"
+    env_file:
+      - pg.env
+      - secrets.env
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     environment:
-      - APP_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
