@@ -6,6 +6,7 @@
     margin: 0;
     position: fixed;
     top: 0;
+    z-index: 1000;
 }
 
 .Header__nav {
@@ -17,10 +18,28 @@
     height: 100%;
 }
 
+.Header__brand-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    transition: color 0.2s;
+    flex-grow: 1; 
+}
 
 .Header__logo {
     height: 35px; 
-    margin-right: 50px;
+    margin-right: 20px;
+}
+
+.Header_title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+    font-family: 'Tinkoffsans', sans-serif;
+    margin-right: 40px; 
+    text-align: start;
+
 }
 
 .Header__nav-list {

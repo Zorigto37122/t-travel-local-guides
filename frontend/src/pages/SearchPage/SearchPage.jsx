@@ -39,7 +39,7 @@ const SearchPage = () => {
             <div className="search-wrapper">
                 <div className="search-field">
                     <input
-                        type="text"
+                        type="contry"
                         name="country"
                         placeholder="Страна"
                         value={formData.country}
