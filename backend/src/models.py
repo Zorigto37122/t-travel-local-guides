@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
+
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, Boolean
+
 class Base(DeclarativeBase):
     pass
 
@@ -51,22 +54,26 @@ class Moderator(Base):
     __tablename__ = "moderators"
     
     moderator_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     
     
     user: Mapped["User"] = relationship(back_populates="moderator_profile")
     moderated_excursions: Mapped[list["Excursion"]] = relationship(back_populates="moderator")
     
 
-class User(Base):
+class User(SQLAlchemyBaseUserTable[int], Base):
     
     __tablename__ = "users"
     
-    user_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     
     moderator_profile: Mapped["Moderator"] = relationship(back_populates="user")
@@ -80,7 +87,7 @@ class Guide(Base):
     
     
     guide_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     
     
     user: Mapped["User"] = relationship(back_populates="guide_profile")
@@ -105,7 +112,7 @@ class Client(Base):
     __tablename__ = "clients"
     
     client_id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, nullable=False)
     
     
     user: Mapped["User"] = relationship(back_populates="client_profile") 
