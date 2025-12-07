@@ -1,6 +1,21 @@
 import React from "react";
 import './ExcursionCard.css';
 
+const getNoun = (num, one, two, five) => {
+    let n = Math.abs(num);
+    n %= 100;
+    if (n >= 5 && n <= 20) {
+        return five;
+    }
+    n %= 10;
+    if (n==1) {
+        return one;
+    }
+    if (n > 1 && n < 5) {
+        return two;
+    }
+    return five;
+}
 const ExcursionCard = ({
     image,
     type,
@@ -14,6 +29,8 @@ const ExcursionCard = ({
     rating,
     reviewsCount
 }) => {
+
+    const reviewsText = getNoun(reviewsCount, 'оценка', 'оценки', 'оценок')
     return (
         <div className="excursion-card">
 
@@ -34,7 +51,7 @@ const ExcursionCard = ({
                     </div>
 
                     <div className="rating-info">
-                        <span className="reviews-link">{reviewsCount} оценки</span>
+                        <span className="reviews-link">{reviewsCount} {reviewsText}</span>
                         <span className="rating-badge">{rating}</span>
                     </div>
                 </div>
@@ -43,7 +60,7 @@ const ExcursionCard = ({
                 <p className="card-description">{description}</p>
 
                 <div className="card-price-block">
-                    <span className="price-amount">{price} $</span>
+                    <span className="price-amount">{price} ₽</span>
                     <span className="price-type"> {priceType}</span>
                 </div>
 

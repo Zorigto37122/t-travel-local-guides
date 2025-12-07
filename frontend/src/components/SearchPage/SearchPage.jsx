@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./SearchPage.css";
+import ExcursionCard from "../ExcursionCard/ExcursionCard";
 
 const SearchPage = () => {
     const [formData, setFormData] = useState({
@@ -30,6 +31,43 @@ const SearchPage = () => {
   { id: 6, name: 'Вена', count: 29, img: 'https://dummyimage.com/400x350/000/fff' },
     ];
     const formattedPeople = `${formData.people} взрослый`;
+
+    const EXCURSIONS_DATA = [
+  {
+    id: 1,
+    image: 'https://avatars.mds.yandex.net/i?id=deae90dd3d9efadb7b1ef2853d0984c3_l-10697157-images-thumbs&n=13',
+    type: 'Групповая',
+    duration: '3 часа',
+    title: 'Обзорная экскурсия по Москве на автобусе',
+    description: 'Увидеть главные достопримечательности и посетить лучшие смотровые площадки столицы.',
+    price: 1400,
+    priceType: 'с человека',
+    transport: 'на автобусе',
+    rating: 9.8,
+    reviewsCount: 123,
+    guide: {
+      name: 'Владимир',
+      avatar: 'https://s.cq.ru/img/t/e/2025/10/06/698795-960.jpg'
+    }
+  },
+  {
+    id: 2,
+    image: 'https://cdnstatic.rg.ru/uploads/images/167/10/51/iStock-502529960.jpg',
+    type: 'Индивидуальная',
+    duration: '2 часа',
+    title: 'Тайны старого Арбата',
+    description: 'Пешеходная прогулка по самым загадочным переулкам с погружением в историю.',
+    price: 5000,
+    priceType: 'за группу',
+    transport: 'пешком',
+    rating: 10.0,
+    reviewsCount: 45,
+    guide: {
+      name: 'Елена',
+      avatar: 'https://distribution.faceit-cdn.net/images/b94611c4-d72d-4dca-b450-b12307cd0012.jpg'
+    }
+  }
+];
 
     return (
         
@@ -127,8 +165,19 @@ const SearchPage = () => {
                     </div>
                 ))}
             </div>
+
+            <div className="excursions-grid">
+                {EXCURSIONS_DATA.map(excursion => (
+                    <ExcursionCard
+                    key={excursion.id}
+                    {...excursion}
+                    />
+                ))}
+            </div>  
         </div>
 
+        
+                
         
     );
 };

@@ -214,3 +214,9 @@
   font-size: 13px;
   color: #888;
 }
+
+
+.excursions-grid {
+  display: flex;
+  gap: 20px;
+}
