@@ -19,12 +19,18 @@ services:
         - postgres_data:/var/lib/postgresql/data
       networks:
         - app-network
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
 
   backend:
     build:
       context: ./backend
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     # environment:
     #   DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     environment:
@@ -36,6 +42,12 @@ services:
       - secrets.env
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
@@ -48,8 +60,12 @@ services:
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:8000
     stdin_open: true
     tty: true
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

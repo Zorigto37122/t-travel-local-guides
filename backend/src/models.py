@@ -13,6 +13,7 @@ class Excursion(Base):
     excursion_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title : Mapped[str] = mapped_column(String(200), nullable=False)
     country: Mapped[str] = mapped_column(String(100), nullable=False)
+    city: Mapped[str] = mapped_column(String(100), nullable=False, default="")
     difficulty: Mapped[str] = mapped_column(String(20),nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     photos: Mapped[str | None] = mapped_column(Text, nullable=True)

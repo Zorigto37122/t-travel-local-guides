@@ -1,0 +1,150 @@
+.Footer {
+  width: 100%;
+  margin-top: auto;
+}
+
+.Footer__bottom {
+  background-color: #2c2c2c;
+  padding: 40px 0 30px 0;
+}
+
+.Footer__bottom-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.Footer__left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.Footer__logo {
+  display: flex;
+  align-items: center;
+}
+
+.Footer__logo-shield {
+  width: 40px;
+  height: 40px;
+  background-color: #ffdd2d;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 24px;
+  color: #000;
+}
+
+.Footer__links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.Footer__bottom-link {
+  color: #4a9eff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.Footer__bottom-link:hover {
+  color: #6bb0ff;
+  text-decoration: underline;
+}
+
+.Footer__legal-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.Footer__legal-link {
+  color: #4a9eff;
+  text-decoration: underline;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.Footer__legal-link:hover {
+  color: #6bb0ff;
+}
+
+.Footer__copyright {
+  color: #999;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.Footer__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.Footer__phone {
+  text-align: right;
+}
+
+.Footer__phone-main {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.Footer__phone-abroad {
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.Footer__social {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.Footer__social-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 18px;
+  transition: opacity 0.2s;
+}
+
+.Footer__social-icon:hover {
+  opacity: 0.7;
+}
+
+@media (max-width: 900px) {
+  .Footer__bottom-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .Footer__right {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .Footer__phone {
+    text-align: left;
+  }
+}

@@ -19,9 +19,15 @@
 }
 
 
+.Header__logo-link {
+    display: inline-block;
+    margin-right: 50px;
+    text-decoration: none;
+}
+
 .Header__logo {
     height: 35px; 
-    margin-right: 50px;
+    display: block;
 }
 
 .Header__nav-list {
@@ -50,17 +56,33 @@
 .Header__LKLink {
     color: #1a73e8;
     text-decoration: none; 
-    display: flex;
-    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
     cursor: pointer;
+    border-radius: 999px;
+    background-color: #f5f7ff;
+    border: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .Header__LKLink span {
-    margin-right: 10px;
+    margin-right: 0;
+    font-size: 14px;
 }
 
 .Header__LKLink img {
     height: 22px;
     color: #1a73e8;
     filter : invert(29%) sepia(98%) saturate(7473%) hue-rotate(203deg) brightness(95%) contrast(101%);
+}
+
+.Header__LogoutButton {
+    margin-left: 8px;
+    padding: 6px 12px;
+    height: auto;
+    font-size: 12px;
 }

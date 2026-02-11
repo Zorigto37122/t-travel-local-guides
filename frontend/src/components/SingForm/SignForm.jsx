@@ -1,12 +1,23 @@
 import { createPortal } from "react-dom";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PatternFormat } from "react-number-format";
-import { useRef, useEffect } from "react";
 import cross from "../../assets/cross.svg";
 import "./SignForm.css";
 import Button from "../Button/Button";
+import { useAuth } from "../../AuthContext.jsx";
+import { loginUser, registerUser } from "../../api.js";
 
-export default function SignForm({ children, open, toClose }) {
+function normalizePhoneToE164(maskedPhone) {
+  if (!maskedPhone) return null;
+  const digits = maskedPhone.replace(/[^\d]/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("7")) {
+    return `+${digits}`;
+  }
+  return `+${digits}`;
+}
+
+export default function SignForm({ open, toClose }) {
   const [formType, setFormType] = useState("login");
 
   const handleSwitch = (type) => {
@@ -19,11 +30,9 @@ export default function SignForm({ children, open, toClose }) {
     if (open) {
       dialogRef.current.showModal();
       document.body.classList.add("overflow-y-hidden");
-      console.log("opened");
-    } else {
+    } else if (dialogRef.current?.open) {
       dialogRef.current.close();
       document.body.classList.remove("overflow-y-hidden");
-      console.log("closed");
     }
   }, [open]);
 
@@ -53,7 +62,7 @@ export default function SignForm({ children, open, toClose }) {
           {formType === "login" ? (
             <LoginForm toClose={toClose} />
           ) : (
-            <RegisterForm toClose={toClose} />
+            <RegisterForm toClose={toClose} switchToLogin={() => setFormType("login")} />
           )}
         </div>
 
@@ -61,7 +70,7 @@ export default function SignForm({ children, open, toClose }) {
           className="SignForm__close-button"
           onClick={() => toClose(false)}
         >
-          <img src={cross}></img>
+          <img src={cross} alt="Закрыть" />
         </Button>
       </div>
     </dialog>,
@@ -69,27 +78,48 @@ export default function SignForm({ children, open, toClose }) {
   );
 }
 
-function RegisterForm({ toClose }) {
+function RegisterForm({ toClose, switchToLogin }) {
   const [surname, setSurname] = useState("");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const { login, setError: setAuthError } = useAuth();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const registerData = {
-      name: name,
-      surname: surname,
-      phone: phone.replace(/[^\d]/g, ""),
-      password: password,
-    };
-    console.log("Данные регистрации:", registerData);
+    setSubmitting(true);
+    setError(null);
+    setAuthError(null);
 
-    setName("");
-    setSurname("");
-    setPhone("");
-    setPassword("");
-    toClose(false);
+    const fullName = surname ? `${name} ${surname}` : name;
+    const phoneE164 = normalizePhoneToE164(phone);
+
+    try {
+      await registerUser({
+        name: fullName,
+        email,
+        password,
+        phone: phoneE164,
+      });
+
+      const loginResponse = await loginUser({ email, password });
+      login(loginResponse.access_token);
+
+      setName("");
+      setSurname("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      toClose(false);
+      switchToLogin();
+    } catch (e) {
+      setError(e.message || "Не удалось зарегистрироваться");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -97,29 +127,34 @@ function RegisterForm({ toClose }) {
       <h3>Регистрация в Авторские Экскурсии</h3>
       <form className="InputForm RegisterForm" onSubmit={handleSubmit}>
         <input
-          type="name"
+          type="text"
           placeholder="Имя"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
-          type="surname"
+          type="text"
           placeholder="Фамилия"
-          required
           value={surname}
           onChange={(e) => setSurname(e.target.value)}
         />
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         <PatternFormat
-          format="+7 (###) ###-##-##"// 👈 Формат маски
-          mask="_" // Символ-заполнитель
+          format="+7 (###) ###-##-##"
+          mask="_"
           value={phone}
           onValueChange={(values) => {
             setPhone(values.formattedValue);
           }}
           type="tel"
           placeholder="Телефон"
-          required
         />
         <input
           type="password"
@@ -129,8 +164,9 @@ function RegisterForm({ toClose }) {
           required
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button className="SignForm__submit-button" type="submit">
-          Зарегистрироваться
+        {error && <p className="SignForm__error">{error}</p>}
+        <Button className="SignForm__submit-button" type="submit" disabled={submitting}>
+          {submitting ? "Регистрация..." : "Зарегистрироваться"}
         </Button>
       </form>
     </>
@@ -138,37 +174,40 @@ function RegisterForm({ toClose }) {
 }
 
 function LoginForm({ toClose }) {
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const { login, setError: setAuthError } = useAuth();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log(phone, phone.length);
-    const loginData = {
-      phone: phone.replace(/[^\d]/g, ""),
-      password: password,
-    };
-    console.log("Данные входа:", loginData);
-
-    setPhone("");
-    setPassword("");
-    toClose(false);
+    setSubmitting(true);
+    setError(null);
+    setAuthError(null);
+    try {
+      const loginResponse = await loginUser({ email, password });
+      login(loginResponse.access_token);
+      setEmail("");
+      setPassword("");
+      toClose(false);
+    } catch (e) {
+      setError(e.message || "Не удалось войти");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <>
       <h3>Вход в Личный Кабинет</h3>
       <form className="InputForm LoginForm" onSubmit={handleSubmit}>
-        <PatternFormat
-          format="+7 (###) ###-##-##" // 👈 Формат маски
-          mask="_" // Символ-заполнитель
-          value={phone}
-          onValueChange={(values) => {
-            setPhone(values.formattedValue);
-          }}
-          type="tel"
-          placeholder="Телефон"
+        <input
+          type="email"
+          placeholder="Email"
           required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
@@ -178,10 +217,12 @@ function LoginForm({ toClose }) {
           required
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button className="SignForm__submit-button" type="submit">
-          Войти
+        {error && <p className="SignForm__error">{error}</p>}
+        <Button className="SignForm__submit-button" type="submit" disabled={submitting}>
+          {submitting ? "Входим..." : "Войти"}
         </Button>
       </form>
     </>
   );
 }
+
