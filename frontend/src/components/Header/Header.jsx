@@ -6,13 +6,29 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
 import { useAuth } from '../../AuthContext.jsx';
+import { checkIfGuide } from '../../api';
 
 export default function Header() {
   const [signFormActivity, setSignFormActivity] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const { user, logout } = useAuth();
+  const [isGuide, setIsGuide] = useState(false);
+  const { user, logout, token } = useAuth();
   const menuRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && token) {
+      checkIfGuide(token)
+        .then((result) => {
+          setIsGuide(result.is_guide || false);
+        })
+        .catch(() => {
+          setIsGuide(false);
+        });
+    } else {
+      setIsGuide(false);
+    }
+  }, [user, token]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -77,6 +93,24 @@ export default function Header() {
                 >
                   Мои бронирования
                 </Link>
+                {isGuide && (
+                  <>
+                    <Link 
+                      to="/guide/dashboard" 
+                      className="Header__dropdown-item"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Мои экскурсии
+                    </Link>
+                    <Link 
+                      to="/guide/calendar" 
+                      className="Header__dropdown-item"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Календарь бронирований
+                    </Link>
+                  </>
+                )}
                 <button 
                   className="Header__dropdown-item Header__dropdown-item--logout"
                   onClick={handleLogout}

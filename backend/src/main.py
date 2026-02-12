@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.routers.auth_router import router as auth_router
 from src.routers.excursions_router import router as excursions_router
+from src.routers.guides_router import router as guides_router
 
 app = FastAPI()
 
@@ -19,10 +20,14 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(excursions_router)
+app.include_router(guides_router)
 
 
 if __name__ == "__main__":
     uvicorn.run(
         "src.main:app",
         reload=True,
+        # Увеличиваем лимит размера тела запроса до 50MB для загрузки изображений
+        limit_max_requests=1000,
+        limit_concurrency=1000,
     )

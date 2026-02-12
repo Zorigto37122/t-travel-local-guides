@@ -75,6 +75,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_guide: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     
     moderator_profile: Mapped["Moderator"] = relationship(back_populates="user")
@@ -89,6 +90,7 @@ class Guide(Base):
     
     guide_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    photo: Mapped[str | None] = mapped_column(String(500), nullable=True)
     
     
     user: Mapped["User"] = relationship(back_populates="guide_profile")

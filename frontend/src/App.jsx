@@ -7,6 +7,9 @@ import HomePage from "./components/HomePage/HomePage";
 import ExcursionDetailsPage from "./components/ExcursionDetails/ExcursionDetailsPage";
 import ProfilePage from "./components/ProfilePage/ProfilePage";
 import BookingsPage from "./components/BookingsPage/BookingsPage";
+import GuideDashboard from "./components/GuideDashboard/GuideDashboard";
+import ExcursionForm from "./components/ExcursionForm/ExcursionForm";
+import GuideCalendar from "./components/GuideCalendar/GuideCalendar";
 import { Routes, Route } from "react-router-dom";
 
 function App() {
@@ -20,6 +23,10 @@ function App() {
           <Route path="/excursions/:id" element={<ExcursionDetailsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/bookings" element={<BookingsPage />} />
+          <Route path="/guide/dashboard" element={<GuideDashboard />} />
+          <Route path="/guide/excursions/new" element={<ExcursionForm />} />
+          <Route path="/guide/excursions/:id/edit" element={<ExcursionForm />} />
+          <Route path="/guide/calendar" element={<GuideCalendar />} />
         </Routes>
       </div>
       <Footer />

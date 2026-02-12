@@ -167,12 +167,13 @@ async function handleResponse(response) {
   return response.json();
 }
 
-export async function registerUser({ name, email, phone, password }) {
+export async function registerUser({ name, email, phone, password, is_guide = false }) {
   const body = {
     name,
     email,
     password,
     phone: phone || null,
+    is_guide: is_guide || false,
   };
 
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -325,6 +326,155 @@ export async function updateUser(token, userData) {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(userData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+// Guide API functions
+export async function getGuideProfile(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function updateGuideProfile(token, guideData) {
+  try {
+    // Проверяем размер данных перед отправкой
+    const jsonData = JSON.stringify(guideData);
+    const sizeInMB = new Blob([jsonData]).size / (1024 * 1024);
+    
+    if (sizeInMB > 10) {
+      throw new Error("Размер фотографии слишком большой. Пожалуйста, выберите изображение размером менее 10 МБ.");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/guides/me`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: jsonData,
+    });
+    
+    if (!response.ok) {
+      // Пытаемся получить детальную информацию об ошибке
+      let errorMessage = "Не удалось обновить профиль";
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map(e => e.msg || e.message || JSON.stringify(e)).join(", ");
+          } else {
+            errorMessage = errorData.detail;
+          }
+        }
+      } catch {
+        errorMessage = `Ошибка сервера: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(translateError(errorMessage));
+    }
+    
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету и убедитесь, что сервер запущен."));
+    }
+    throw error;
+  }
+}
+
+export async function getMyExcursions(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me/excursions`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function createExcursion(token, excursionData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me/excursions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(excursionData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function updateExcursion(token, excursionId, excursionData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me/excursions/${excursionId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(excursionData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function getGuideBookings(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me/bookings`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function checkIfGuide(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/check`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     return handleResponse(response);
   } catch (error) {

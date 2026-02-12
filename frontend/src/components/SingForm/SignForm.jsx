@@ -84,6 +84,7 @@ function RegisterForm({ toClose, switchToLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [isGuide, setIsGuide] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const { login, setError: setAuthError } = useAuth();
@@ -103,6 +104,7 @@ function RegisterForm({ toClose, switchToLogin }) {
         email,
         password,
         phone: phoneE164,
+        is_guide: isGuide,
       });
 
       const loginResponse = await loginUser({ email, password });
@@ -113,6 +115,7 @@ function RegisterForm({ toClose, switchToLogin }) {
       setEmail("");
       setPhone("");
       setPassword("");
+      setIsGuide(false);
       toClose(false);
       switchToLogin();
     } catch (e) {
@@ -164,6 +167,14 @@ function RegisterForm({ toClose, switchToLogin }) {
           required
           onChange={(e) => setPassword(e.target.value)}
         />
+        <label>
+          <input
+            type="checkbox"
+            checked={isGuide}
+            onChange={(e) => setIsGuide(e.target.checked)}
+          />
+          <span>Я гид</span>
+        </label>
         {error && <p className="SignForm__error">{error}</p>}
         <Button className="SignForm__submit-button" type="submit" disabled={submitting}>
           {submitting ? "Регистрация..." : "Зарегистрироваться"}

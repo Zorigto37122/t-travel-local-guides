@@ -1,0 +1,200 @@
+.excursion-form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 80px 20px 20px;
+  min-height: calc(100vh - 200px);
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.excursion-form-title {
+  font-size: 32px;
+  font-weight: 500;
+  margin-bottom: 30px;
+  color: #000;
+}
+
+.excursion-form-error {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.excursion-form {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.excursion-form-field {
+  margin-bottom: 20px;
+}
+
+.excursion-form-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+}
+
+.excursion-form-field input,
+.excursion-form-field textarea,
+.excursion-form-field select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.excursion-form-field input:focus,
+.excursion-form-field textarea:focus,
+.excursion-form-field select:focus {
+  outline: none;
+  border-color: #2196F3;
+}
+
+.excursion-form-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.excursion-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .excursion-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.excursion-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.excursion-form-cancel-btn {
+  padding: 10px 20px;
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.excursion-form-cancel-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.excursion-form-submit-btn {
+  padding: 10px 20px;
+  background-color: #ffdd2d;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: filter 0.2s;
+}
+
+.excursion-form-submit-btn:hover {
+  filter: brightness(0.95);
+}
+
+.excursion-form-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.excursion-photo-preview-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.excursion-photo-preview-item {
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.excursion-photo-preview-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.excursion-photo-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 0, 0, 0.8);
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.excursion-photo-remove-btn:hover {
+  background-color: rgba(255, 0, 0, 1);
+}
+
+.excursion-photo-name {
+  display: block;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #666;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  background: white;
+}
+
+.excursion-photo-url-info {
+  margin-top: 8px;
+}
+
+.excursion-photo-preview-item.excursion-photo-existing {
+  border-color: #2196F3;
+}
+
+.excursion-photo-preview-item.excursion-photo-existing::after {
+  content: "Существующее";
+  position: absolute;
+  bottom: 20px;
+  left: 4px;
+  background: rgba(33, 150, 243, 0.9);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+}

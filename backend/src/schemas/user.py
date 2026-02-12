@@ -8,12 +8,14 @@ from pydantic import Field, field_validator, EmailStr
 class UserRead(schemas.BaseUser[int]):
     phone: str | None = None
     name: str
+    is_guide: bool = False
 
 
 class UserCreate(schemas.BaseUserCreate):
     phone: Annotated[str | None, Field(min_length=10, max_length=20, pattern=r'^\+[1-9]\d{1,14}$',
                                        examples=["+79991234567"])] = None
     name:  Annotated[str, Field(min_length=2, max_length=50, examples=["Иван Иванов"])]
+    is_guide: bool = Field(default=False, description="Является ли пользователь гидом")
     
     
     
