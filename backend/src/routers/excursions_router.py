@@ -13,6 +13,7 @@ from src.schemas.excursion import (
     AvailableTimeSlot,
     BookingCreate,
     BookingResponse,
+    BookingWithExcursion,
     ExcursionCreate,
     ExcursionRead,
 )
@@ -335,5 +336,136 @@ async def create_booking(
     return BookingResponse(
         booking=booking,
         message="Экскурсия успешно забронирована",
+    )
+
+
+@router.get(
+    "/bookings/me",
+    response_model=List[BookingWithExcursion],
+)
+async def get_my_bookings(
+    user=Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+) -> List[BookingWithExcursion]:
+    """
+    Получить все бронирования текущего пользователя.
+    """
+    # Получаем профиль клиента
+    client_result = await session.execute(
+        select(Client).where(Client.user_id == user.id)
+    )
+    client = client_result.scalar_one_or_none()
+    
+    if client is None:
+        return []
+    
+    # Получаем все бронирования клиента с информацией об экскурсиях
+    bookings_query = (
+        select(Booking, Excursion)
+        .join(Excursion, Booking.excursion_id == Excursion.excursion_id)
+        .where(Booking.client_id == client.client_id)
+        .order_by(Booking.date.desc())
+    )
+    
+    result = await session.execute(bookings_query)
+    bookings_data = result.all()
+    
+    bookings_list = []
+    for booking, excursion in bookings_data:
+        total_amount = float(excursion.price_per_person) * booking.number_of_people
+        bookings_list.append(
+            BookingWithExcursion(
+                booking_id=booking.booking_id,
+                excursion_id=booking.excursion_id,
+                date=booking.date,
+                number_of_people=booking.number_of_people,
+                status=booking.status,
+                payment_status=booking.payment_status,
+                excursion_title=excursion.title,
+                excursion_city=excursion.city,
+                excursion_country=excursion.country,
+                excursion_photo=excursion.photos,
+                price_per_person=float(excursion.price_per_person),
+                total_amount=total_amount,
+            )
+        )
+    
+    return bookings_list
+
+
+@router.post(
+    "/bookings/{booking_id}/cancel",
+    response_model=BookingWithExcursion,
+)
+async def cancel_booking(
+    booking_id: int,
+    user=Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+) -> BookingWithExcursion:
+    """
+    Отменить бронирование.
+    """
+    # Получаем профиль клиента
+    client_result = await session.execute(
+        select(Client).where(Client.user_id == user.id)
+    )
+    client = client_result.scalar_one_or_none()
+    
+    if client is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Профиль клиента не найден"
+        )
+    
+    # Получаем бронирование
+    booking = await session.get(Booking, booking_id)
+    if booking is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Бронирование не найдено"
+        )
+    
+    # Проверяем, что бронирование принадлежит текущему пользователю
+    if booking.client_id != client.client_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Нет доступа к этому бронированию"
+        )
+    
+    # Проверяем, что бронирование можно отменить
+    if booking.status == "cancelled":
+        raise HTTPException(
+            status_code=400,
+            detail="Бронирование уже отменено"
+        )
+    
+    # Отменяем бронирование
+    booking.status = "cancelled"
+    await session.commit()
+    await session.refresh(booking)
+    
+    # Получаем информацию об экскурсии
+    excursion = await session.get(Excursion, booking.excursion_id)
+    if excursion is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Экскурсия не найдена"
+        )
+    
+    total_amount = float(excursion.price_per_person) * booking.number_of_people
+    
+    return BookingWithExcursion(
+        booking_id=booking.booking_id,
+        excursion_id=booking.excursion_id,
+        date=booking.date,
+        number_of_people=booking.number_of_people,
+        status=booking.status,
+        payment_status=booking.payment_status,
+        excursion_title=excursion.title,
+        excursion_city=excursion.city,
+        excursion_country=excursion.country,
+        excursion_photo=excursion.photos,
+        price_per_person=float(excursion.price_per_person),
+        total_amount=total_amount,
     )
 

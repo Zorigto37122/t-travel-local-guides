@@ -3,6 +3,117 @@
 // и были доступны через import.meta.env
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+// Функция для перевода ошибок на русский язык
+export function translateError(errorMessage) {
+  if (!errorMessage) return "Произошла ошибка";
+  
+  const errorLower = errorMessage.toLowerCase();
+  const errorUpper = errorMessage.toUpperCase();
+  
+  // Ошибки авторизации (конкретные коды ошибок)
+  if (errorUpper.includes("LOGIN_BAD_CREDENTIALS") || errorLower.includes("login_bad_credentials")) {
+    return "Неверный email или пароль";
+  }
+  if (errorLower.includes("bad credentials") || errorLower.includes("invalid credentials")) {
+    return "Неверный email или пароль";
+  }
+  if (errorLower.includes("incorrect password") || errorLower.includes("wrong password")) {
+    return "Неверный пароль";
+  }
+  if (errorLower.includes("user not found") || errorLower.includes("user does not exist")) {
+    return "Пользователь с таким email не найден";
+  }
+  
+  // Ошибки регистрации (конкретные коды ошибок)
+  if (errorUpper.includes("REGISTER_USER_ALREADY_EXISTS") || errorLower.includes("register_user_already_exists")) {
+    return "Пользователь с таким email уже зарегистрирован";
+  }
+  if (errorLower.includes("email already registered") || errorLower.includes("email already exists")) {
+    return "Пользователь с таким email уже зарегистрирован";
+  }
+  
+  // Ошибки валидации полей
+  if (errorLower.includes("string should have at least") || 
+      errorLower.includes("ensure this value has at least") ||
+      errorLower.includes("string should have at least")) {
+    if (errorLower.includes("10") || errorMessage.match(/at least\s+10/i)) {
+      return "Телефон должен содержать минимум 10 символов";
+    }
+    if (errorLower.includes("8") || errorMessage.match(/at least\s+8/i)) {
+      return "Пароль должен содержать минимум 8 символов";
+    }
+    if (errorLower.includes("2") || errorMessage.match(/at least\s+2/i)) {
+      return "Имя должно содержать минимум 2 символа";
+    }
+    // Общий случай - извлекаем число из сообщения
+    const match = errorMessage.match(/at least\s+(\d+)|(\d+)\s+characters?/i);
+    if (match) {
+      const num = match[1] || match[2];
+      return `Поле должно содержать минимум ${num} символов`;
+    }
+    return "Поле слишком короткое";
+  }
+  if (errorLower.includes("password") && errorLower.includes("weak")) {
+    return "Пароль слишком слабый";
+  }
+  if (errorLower.includes("password") && errorLower.includes("minimum")) {
+    return "Пароль должен содержать минимум 8 символов";
+  }
+  if (errorLower.includes("password") && errorLower.includes("uppercase") || errorLower.includes("заглавную")) {
+    return "Пароль должен содержать заглавную букву";
+  }
+  if (errorLower.includes("password") && errorLower.includes("lowercase") || errorLower.includes("строчную")) {
+    return "Пароль должен содержать строчную букву";
+  }
+  if (errorLower.includes("password") && errorLower.includes("digit") || errorLower.includes("цифру")) {
+    return "Пароль должен содержать цифру";
+  }
+  if (errorLower.includes("password") && errorLower.includes("special") || errorLower.includes("специальный")) {
+    return "Пароль должен содержать специальный символ";
+  }
+  
+  // Ошибки валидации
+  if (errorLower.includes("invalid email") || errorLower.includes("email format")) {
+    return "Неверный формат email";
+  }
+  if (errorLower.includes("phone") && errorLower.includes("invalid") || errorLower.includes("формат")) {
+    return "Неверный формат телефона";
+  }
+  
+  // Ошибки сети
+  if (errorLower.includes("failed to fetch") || errorLower.includes("network error")) {
+    return "Ошибка подключения к серверу. Проверьте подключение к интернету";
+  }
+  if (errorLower.includes("timeout")) {
+    return "Превышено время ожидания ответа от сервера";
+  }
+  
+  // Ошибки бронирования
+  if (errorLower.includes("no available") || errorLower.includes("нет свободных мест")) {
+    return "На выбранную дату и время нет свободных мест";
+  }
+  if (errorLower.includes("booking") && errorLower.includes("error")) {
+    return "Не удалось забронировать экскурсию";
+  }
+  
+  // Общие ошибки
+  if (errorLower.includes("unauthorized") || errorLower.includes("401")) {
+    return "Необходимо войти в систему";
+  }
+  if (errorLower.includes("forbidden") || errorLower.includes("403")) {
+    return "Доступ запрещен";
+  }
+  if (errorLower.includes("not found") || errorLower.includes("404")) {
+    return "Запрашиваемый ресурс не найден";
+  }
+  if (errorLower.includes("server error") || errorLower.includes("500")) {
+    return "Ошибка сервера. Попробуйте позже";
+  }
+  
+  // Если ошибка уже на русском или не распознана, возвращаем как есть
+  return errorMessage;
+}
+
 // Логируем используемый URL для отладки
 if (typeof window !== 'undefined') {
   console.log("API_BASE_URL:", API_BASE_URL);
@@ -19,17 +130,38 @@ async function handleResponse(response) {
       if (Array.isArray(data.detail)) {
         // Ошибки валидации FastAPI/Pydantic
         message = data.detail
-          .map((err) => err.msg || JSON.stringify(err))
+          .map((err) => {
+            // Обрабатываем разные форматы ошибок
+            if (typeof err === "string") {
+              return err;
+            }
+            if (err.msg) {
+              return err.msg;
+            }
+            if (err.type) {
+              return err.type;
+            }
+            return JSON.stringify(err);
+          })
           .join("\n");
       } else if (data.detail && typeof data.detail === "string") {
         message = data.detail;
+      } else if (data.detail && typeof data.detail === "object") {
+        // Если detail это объект, пытаемся извлечь сообщение
+        message = data.detail.msg || data.detail.message || JSON.stringify(data.detail);
+      } else if (data.message) {
+        message = data.message;
       } else {
         message = JSON.stringify(data);
       }
     } catch {
-      message = await response.text();
+      try {
+        message = await response.text();
+      } catch {
+        message = "Ошибка запроса";
+      }
     }
-    throw new Error(message);
+    throw new Error(translateError(message));
   }
   if (response.status === 204) return null;
   return response.json();
@@ -98,7 +230,7 @@ export async function getExcursionById(id) {
     return handleResponse(response);
   } catch (error) {
     if (error instanceof TypeError && error.message === "Failed to fetch") {
-      throw new Error("Не удалось подключиться к серверу. Проверьте подключение к интернету.");
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
     }
     throw error;
   }
@@ -113,7 +245,7 @@ export async function getAvailableDates(excursionId, people = 1) {
     return handleResponse(response);
   } catch (error) {
     if (error instanceof TypeError && error.message === "Failed to fetch") {
-      throw new Error("Не удалось подключиться к серверу. Проверьте подключение к интернету.");
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
     }
     throw error;
   }
@@ -143,9 +275,61 @@ export async function createBooking({ token, excursionId, dateTimeISO, people })
     console.error("Booking error:", error);
     if (error instanceof TypeError) {
       if (error.message === "Failed to fetch") {
-        throw new Error(`Не удалось подключиться к серверу (${API_BASE_URL}). Убедитесь, что бэкенд запущен и доступен.`);
+        throw new Error(translateError(`Не удалось подключиться к серверу (${API_BASE_URL}). Убедитесь, что бэкенд запущен и доступен.`));
       }
-      throw new Error(`Ошибка сети: ${error.message}`);
+      throw new Error(translateError(`Ошибка сети: ${error.message}`));
+    }
+    throw error;
+  }
+}
+
+export async function getMyBookings(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function cancelBooking(token, bookingId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/cancel`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function updateUser(token, userData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(userData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
     }
     throw error;
   }

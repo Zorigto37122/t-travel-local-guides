@@ -49,9 +49,19 @@ class BookingCreate(BookingBase):
 class BookingRead(BookingBase):
     booking_id: int
     status: str
+    payment_status: str
 
     class Config:
         from_attributes = True
+
+
+class BookingWithExcursion(BookingRead):
+    excursion_title: str
+    excursion_city: str
+    excursion_country: str
+    excursion_photo: Optional[str] = None
+    price_per_person: float
+    total_amount: float
 
 
 class BookingResponse(BaseModel):

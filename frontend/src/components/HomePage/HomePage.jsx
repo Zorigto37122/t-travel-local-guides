@@ -21,6 +21,7 @@ const HomePage = () => {
     }));
   };
 
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (formData.country) params.set("country", formData.country);
@@ -67,13 +68,14 @@ const HomePage = () => {
           />
         </div>
 
-        <div className="search-field">
+        <div className="search-field search-field--date">
           <input
             type="date"
             name="date"
-            placeholder="Дата"
             value={formData.date}
             onChange={handleChange}
+            className="search-field-input search-field-input--date"
+            min={new Date().toISOString().split('T')[0]}
           />
         </div>
 
@@ -89,7 +91,7 @@ const HomePage = () => {
         </div>
 
         <div className="search-field search-field--checkbox">
-          <label>
+          <label style={{ whiteSpace: 'nowrap' }}>
             <input
               type="checkbox"
               name="hasChildren"

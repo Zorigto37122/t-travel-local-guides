@@ -5,6 +5,8 @@ import "./App.css";
 import SearchPage from "./components/SearchPage/SearchPage";
 import HomePage from "./components/HomePage/HomePage";
 import ExcursionDetailsPage from "./components/ExcursionDetails/ExcursionDetailsPage";
+import ProfilePage from "./components/ProfilePage/ProfilePage";
+import BookingsPage from "./components/BookingsPage/BookingsPage";
 import { Routes, Route } from "react-router-dom";
 
 function App() {
@@ -16,6 +18,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/excursions/:id" element={<ExcursionDetailsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/bookings" element={<BookingsPage />} />
         </Routes>
       </div>
       <Footer />

@@ -5,7 +5,7 @@ import cross from "../../assets/cross.svg";
 import "./SignForm.css";
 import Button from "../Button/Button";
 import { useAuth } from "../../AuthContext.jsx";
-import { loginUser, registerUser } from "../../api.js";
+import { loginUser, registerUser, translateError } from "../../api.js";
 
 function normalizePhoneToE164(maskedPhone) {
   if (!maskedPhone) return null;
@@ -116,7 +116,7 @@ function RegisterForm({ toClose, switchToLogin }) {
       toClose(false);
       switchToLogin();
     } catch (e) {
-      setError(e.message || "Не удалось зарегистрироваться");
+      setError(translateError(e.message || "Не удалось зарегистрироваться"));
     } finally {
       setSubmitting(false);
     }
@@ -192,7 +192,7 @@ function LoginForm({ toClose }) {
       setPassword("");
       toClose(false);
     } catch (e) {
-      setError(e.message || "Не удалось войти");
+      setError(translateError(e.message || "Не удалось войти"));
     } finally {
       setSubmitting(false);
     }

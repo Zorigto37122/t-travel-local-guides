@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { PatternFormat } from "react-number-format";
 import "./SearchPage.css";
 import ExcursionCard from "../ExcursionCard/ExcursionCard";
 import { searchExcursions } from "../../api";
@@ -27,6 +28,20 @@ const SearchPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const formatDateForDisplay = (isoDate) => {
+    if (!isoDate) return "";
+    const [year, month, day] = isoDate.split('-');
+    return `${day}.${month}.${year}`;
+  };
+
+  const parseDateFromDisplay = (displayDate) => {
+    if (!displayDate || displayDate.length !== 10 || displayDate.indexOf('_') !== -1) {
+      return "";
+    }
+    const [day, month, year] = displayDate.split('.');
+    return `${year}-${month}-${day}`;
   };
 
   const handleSearch = () => {
@@ -120,12 +135,29 @@ const SearchPage = () => {
         </div>
 
         <div className="search-field">
-          <input
-            type="date"
-            name="date"
-            placeholder="Дата"
-            value={formData.date}
-            onChange={handleChange}
+          <PatternFormat
+            format="##.##.####"
+            mask="_"
+            value={formatDateForDisplay(formData.date)}
+            onValueChange={(values) => {
+              const formatted = values.formattedValue;
+              const isoDate = parseDateFromDisplay(formatted);
+              setFormData((prev) => ({
+                ...prev,
+                date: isoDate,
+              }));
+            }}
+            placeholder="дд.мм.гггг"
+            style={{
+              paddingLeft: '4px',
+              paddingRight: '4px',
+              border: 'none',
+              outline: 'none',
+              fontSize: '16px',
+              color: '#555',
+              width: '100%',
+              background: 'transparent',
+            }}
           />
         </div>
 
