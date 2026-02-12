@@ -59,27 +59,37 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px 6px 12px;
+    padding: 6px 6px 6px 10px;
     cursor: pointer;
     border-radius: 999px;
     background-color: #f5f7ff;
     border: none;
     white-space: nowrap;
     flex-shrink: 0;
+    flex-grow: 0 !important;
     box-sizing: border-box;
     font-size: 14px;
+    margin: 0;
+    min-width: auto;
+    width: auto;
 }
 
 .Header__LKLink span {
     margin: 0;
     padding: 0;
     font-size: 14px;
+    display: inline-block;
+    line-height: 1;
 }
 
 .Header__LKLink img {
     height: 22px;
+    width: 22px;
     color: #1a73e8;
     filter : invert(29%) sepia(98%) saturate(7473%) hue-rotate(203deg) brightness(95%) contrast(101%);
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
 }
 
 .Header__user-menu {
