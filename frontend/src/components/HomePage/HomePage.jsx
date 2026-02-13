@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const [formData, setFormData] = useState({
-    country: "",
+    country: "Россия",
     city: "",
     date: "",
     people: 1,
@@ -33,13 +33,27 @@ const HomePage = () => {
     navigate(`/search?${params.toString()}`);
   };
 
+  const handleCityCardClick = (cityName, countryName) => {
+    const params = new URLSearchParams();
+  
+    params.set("country", countryName);
+    params.set("city", cityName);
+    params.set("people", String(formData.people));
+  
+    if (formData.date) params.set("date", formData.date);
+    if (formData.hasChildren) params.set("has_children", "true");
+  
+    navigate(`/search?${params.toString()}`);
+  };
+  
+
   const POPULAR_CITIES = [
-    { id: 1, name: "Санкт-Петербург", count: 450, img: "https://dummyimage.com/400x350/000/fff" },
-    { id: 2, name: "Москва", count: 320, img: "https://dummyimage.com/400x350/000/fff" },
-    { id: 3, name: "Казань", count: 150, img: "https://dummyimage.com/400x350/000/fff" },
-    { id: 4, name: "Сочи", count: 200, img: "https://dummyimage.com/400x350/000/fff" },
-    { id: 5, name: "Стамбул", count: 75, img: "https://dummyimage.com/400x350/000/fff" },
-    { id: 6, name: "Вена", count: 29, img: "https://dummyimage.com/400x350/000/fff" },
+    { id: 1, name: "Санкт-Петербург", country: "Россия", count: 450, img: "https://i.ibb.co/ZzyFPWG9/images-2021-08-30-1618617108sankt-peterburg-krasivie-mesta-foto-large.jpg" },
+    { id: 2, name: "Москва", country: "Россия", count: 320, img: "https://i.ibb.co/JhvLWTv/8.webp" },
+    { id: 3, name: "Казань", country: "Россия", count: 150, img: "https://i.ibb.co/zTzVRLs8/optimize.webp" },
+    { id: 4, name: "Сочи", country: "Россия", count: 200, img: "https://i.ibb.co/F4kgcsYS/26-picture-afb903ac.jpg" },
+    { id: 5, name: "Стамбул", country: "Турция", count: 75, img: "https://i.ibb.co/SDXGVPH8/1574264160-sultanahm.jpg" },
+    { id: 6, name: "Вена", country: "Австрия", count: 29, img: "https://i.ibb.co/4RMmXfkk/a938f68769195411fb67644ac02908e5.jpg" },
   ];
 
 
@@ -92,13 +106,13 @@ const HomePage = () => {
 
         <div className="search-field search-field--checkbox">
           <label style={{ whiteSpace: 'nowrap' }}>
-            <input
+            <input style={{ width: "30%" }}
               type="checkbox"
               name="hasChildren"
               checked={formData.hasChildren}
               onChange={handleChange}
             />
-            С детьми
+            <span style={{ fontSize: "16px" }}>С детьми</span>
           </label>
         </div>
 
@@ -109,7 +123,7 @@ const HomePage = () => {
 
       <div className="feature-boxes">
         <div className="feature-box">
-          <div className="feature-icon">🗺️</div>
+          <div className="feature-icon">🌏</div>
           <div className="feature-text">
             <div className="feature-title">На любой вкус</div>
             <p className="feature-description">
@@ -119,7 +133,7 @@ const HomePage = () => {
         </div>
 
         <div className="feature-box">
-          <div className="feature-icon">🗺️</div>
+          <div className="feature-icon">🛩️</div>
           <div className="feature-text">
             <div className="feature-title">Больше выгоды</div>
             <p className="feature-description">
@@ -129,7 +143,7 @@ const HomePage = () => {
         </div>
 
         <div className="feature-box">
-          <div className="feature-icon">🗺️</div>
+          <div className="feature-icon">🔐</div>
           <div className="feature-text">
             <div className="feature-title">Безопасная покупка</div>
             <p className="feature-description">
@@ -142,7 +156,7 @@ const HomePage = () => {
       <h3 className="second-page-title">Популярные города у наших путешественников</h3>
       <div className="cities-grid">
         {POPULAR_CITIES.map((city) => (
-          <div key={city.id} className="city-card">
+          <div key={city.id} className="city-card" onClick={() => handleCityCardClick(city.name, city.country)}>
             <div className="city-image-wrapper">
               <img src={city.img} alt={city.name} />
             </div>

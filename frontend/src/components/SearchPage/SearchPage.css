@@ -100,7 +100,6 @@
 .search-field--checkbox label {
   display: flex;
   align-items: center;
-  gap: 6px;
   padding-left: 4px;
   margin-bottom: 0;
   white-space: nowrap;
