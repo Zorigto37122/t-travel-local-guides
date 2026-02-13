@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../AuthContext.jsx";
 import { useNavigate, useParams } from "react-router-dom";
-import { createExcursion, updateExcursion, getExcursionById, translateError } from "../../api";
+import { createExcursion, updateExcursion, getExcursionById, uploadExcursionPhotos, translateError } from "../../api";
 import "./ExcursionForm.css";
 
 const ExcursionForm = () => {
@@ -52,19 +52,35 @@ const ExcursionForm = () => {
         available_slots: excursion.available_slots?.toString() || "",
       });
 
-      // Если есть фотографии, пытаемся определить base64 и показать их в превью
+      // Если есть фотографии, показываем их в превью
       if (photos) {
         const photoArray = photos.split(',').filter(p => p.trim());
-        const base64Previews = photoArray
-          .filter(photo => photo.trim().startsWith('data:image'))
-          .map((photo, index) => ({
+        const urlPreviews = photoArray.map((photo, index) => {
+          const photoUrl = photo.trim();
+          // Определяем URL для отображения
+          let displayUrl;
+          if (photoUrl.startsWith('data:image')) {
+            // Base64 - используем как есть для отображения, но не сохраняем
+            displayUrl = photoUrl;
+          } else if (photoUrl.startsWith('http')) {
+            // Полный URL
+            displayUrl = photoUrl;
+          } else {
+            // Относительный URL - добавляем базовый URL API
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            displayUrl = `${apiUrl}${photoUrl}`;
+          }
+          
+          return {
             file: null, // Это существующее изображение, не файл
-            preview: photo.trim(),
+            preview: displayUrl,
+            originalUrl: photoUrl, // Сохраняем оригинальный URL для отправки на сервер
             name: `Изображение ${index + 1}`
-          }));
+          };
+        });
         
-        if (base64Previews.length > 0) {
-          setPhotoPreviews(base64Previews);
+        if (urlPreviews.length > 0) {
+          setPhotoPreviews(urlPreviews);
         }
       }
     } catch (err) {
@@ -123,20 +139,6 @@ const ExcursionForm = () => {
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const convertFilesToBase64 = async (files) => {
-    const base64Promises = files.map(file => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          resolve(reader.result);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    });
-    return Promise.all(base64Promises);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -145,27 +147,21 @@ const ExcursionForm = () => {
     try {
       let photosString = "";
       
-      // Собираем все фотографии: существующие base64 из превью и новые загруженные файлы
-      const existingBase64Photos = photoPreviews
-        .filter(preview => preview.preview.startsWith('data:image'))
-        .map(preview => preview.preview);
-      
-      // Конвертируем новые загруженные файлы в base64
-      let newBase64Photos = [];
+      // Загружаем новые файлы на сервер
+      let uploadedUrls = [];
       if (photoFiles.length > 0) {
-        newBase64Photos = await convertFilesToBase64(photoFiles);
+        uploadedUrls = await uploadExcursionPhotos(token, photoFiles);
       }
       
-      // Объединяем существующие base64 и новые
-      const allBase64Photos = [...existingBase64Photos, ...newBase64Photos];
+      // Собираем существующие URL (не base64) из превью
+      // Используем originalUrl если есть, иначе preview (но не base64)
+      const existingUrls = photoPreviews
+        .filter(preview => !preview.file && preview.preview && !preview.preview.startsWith('data:image'))
+        .map(preview => preview.originalUrl || preview.preview);
       
-      // Если есть существующие URL (не base64), добавляем их
-      const existingUrls = formData.photos 
-        ? formData.photos.split(',').filter(p => p.trim() && !p.trim().startsWith('data:image'))
-        : [];
-      
-      // Объединяем все: сначала base64, потом URL
-      photosString = [...allBase64Photos, ...existingUrls].join(',') || null;
+      // Объединяем загруженные URL и существующие URL
+      const allUrls = [...uploadedUrls, ...existingUrls];
+      photosString = allUrls.length > 0 ? allUrls.join(',') : null;
 
       const submissionData = {
         ...formData,

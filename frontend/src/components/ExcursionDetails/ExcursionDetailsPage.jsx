@@ -164,15 +164,35 @@ const ExcursionDetailsPage = () => {
     return <div className="details-container">Экскурсия не найдена</div>;
   }
 
+  // Получаем первое фото из списка
+  const getFirstPhoto = () => {
+    if (!excursion.photos) {
+      return "https://dummyimage.com/900x400/f3f4f6/cccccc&text=Экскурсия";
+    }
+    const photos = excursion.photos.split(',').filter(p => p.trim());
+    if (photos.length === 0) {
+      return "https://dummyimage.com/900x400/f3f4f6/cccccc&text=Экскурсия";
+    }
+    const firstPhoto = photos[0].trim();
+    // Если это base64, используем как есть
+    if (firstPhoto.startsWith('data:image')) {
+      return firstPhoto;
+    }
+    // Если это полный URL, используем как есть
+    if (firstPhoto.startsWith('http')) {
+      return firstPhoto;
+    }
+    // Иначе добавляем базовый URL API
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    return `${apiUrl}${firstPhoto}`;
+  };
+
   return (
     <div className="details-container">
       <div className="details-hero">
         <div className="details-image-wrapper">
           <img
-            src={
-              excursion.photos ||
-              "https://dummyimage.com/900x400/f3f4f6/cccccc&text=Экскурсия"
-            }
+            src={getFirstPhoto()}
             alt={excursion.title}
           />
         </div>

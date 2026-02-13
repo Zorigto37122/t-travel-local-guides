@@ -35,7 +35,29 @@ const ExcursionCard = ({
     onBook,
     onCardClick
 }) => {
-    const cardImage = image || photos || "https://dummyimage.com/400x350/f3f4f6/cccccc&text=Экскурсия";
+    // Получаем первое фото из списка или используем image
+    const getCardImage = () => {
+        if (image) return image;
+        if (!photos) return "https://dummyimage.com/400x350/f3f4f6/cccccc&text=Экскурсия";
+        
+        const photoArray = photos.split(',').filter(p => p.trim());
+        if (photoArray.length === 0) return "https://dummyimage.com/400x350/f3f4f6/cccccc&text=Экскурсия";
+        
+        const firstPhoto = photoArray[0].trim();
+        // Если это base64, используем как есть
+        if (firstPhoto.startsWith('data:image')) {
+            return firstPhoto;
+        }
+        // Если это полный URL, используем как есть
+        if (firstPhoto.startsWith('http')) {
+            return firstPhoto;
+        }
+        // Иначе добавляем базовый URL API
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        return `${apiUrl}${firstPhoto}`;
+    };
+    
+    const cardImage = getCardImage();
     const cardGuide = guide || {
         name: "Авторский гид",
         avatar: "https://dummyimage.com/40x40/ddd/555&text=G",

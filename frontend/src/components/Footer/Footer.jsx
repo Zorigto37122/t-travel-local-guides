@@ -1,5 +1,6 @@
 import React from 'react';
 import './Footer.css';
+import logo from '../../assets/logo.svg';
 
 export default function Footer() {
   return (
@@ -8,7 +9,7 @@ export default function Footer() {
         <div className="Footer__bottom-content">
           <div className="Footer__left">
             <div className="Footer__logo">
-              <div className="Footer__logo-shield">T</div>
+              <img className="Footer__logo" src={logo} alt="T-Путешествия" />
             </div>
             <div className="Footer__links">
               <a href="#" className="Footer__bottom-link">Правила сервиса</a>
@@ -24,7 +25,7 @@ export default function Footer() {
               <a href="#" className="Footer__legal-link">Условия проведения маркетинговых акций «Т-Путешествия»</a>
             </div>
             <div className="Footer__copyright">
-              Сервис предоставляется ООО «ТКС», ОГРН 1067760370050 © 2006-2026, АО «ТБанк», официальный сайт, универсальная лицензия ЦБ РФ № 2673
+              <span>© 2026 T-Travel. Все права защищены</span>
             </div>
           </div>
           <div className="Footer__right">

@@ -415,6 +415,43 @@ export async function getMyExcursions(token) {
   }
 }
 
+export async function uploadExcursionPhotos(token, photoFiles) {
+  try {
+    const formData = new FormData();
+    photoFiles.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/uploads/excursion-photos`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Не удалось загрузить фотографии";
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          errorMessage = errorData.detail;
+        }
+      } catch {
+        errorMessage = `Ошибка сервера: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(translateError(errorMessage));
+    }
+
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
 export async function createExcursion(token, excursionData) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/guides/me/excursions`, {

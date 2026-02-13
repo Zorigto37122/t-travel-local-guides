@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ExcursionBase(BaseModel):
@@ -23,6 +23,17 @@ class ExcursionCreate(ExcursionBase):
 class ExcursionRead(ExcursionBase):
     excursion_id: int
     status: str
+
+    @model_validator(mode='after')
+    def enrich_photos(self):
+        """Автоматически подставляет фотки для экскурсий с Москвой из assets/excursions"""
+        from src.utils import enrich_excursion_photos
+        
+        # Всегда проверяем возможность обогащения фоток
+        enriched_photos = enrich_excursion_photos(self.photos, self.title, self.city)
+        self.photos = enriched_photos
+        
+        return self
 
     class Config:
         from_attributes = True
@@ -62,6 +73,17 @@ class BookingWithExcursion(BookingRead):
     excursion_photo: Optional[str] = None
     price_per_person: float
     total_amount: float
+
+    @model_validator(mode='after')
+    def enrich_excursion_photo(self):
+        """Автоматически подставляет фотки для экскурсий с Москвой из assets/excursions"""
+        from src.utils import enrich_excursion_photos
+        
+        # Всегда проверяем возможность обогащения фоток
+        enriched_photo = enrich_excursion_photos(self.excursion_photo, self.excursion_title, self.excursion_city)
+        self.excursion_photo = enriched_photo
+        
+        return self
 
 
 class BookingResponse(BaseModel):
