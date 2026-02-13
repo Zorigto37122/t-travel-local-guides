@@ -28,6 +28,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
 
 ENV PYTHONUNBUFFERED=1
+ENV UVICORN_LIMIT_MAX_REQUESTS_BODY=52428800
 
 EXPOSE 8000
 

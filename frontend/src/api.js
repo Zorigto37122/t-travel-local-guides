@@ -485,3 +485,209 @@ export async function checkIfGuide(token) {
   }
 }
 
+// Admin API functions
+export async function adminGetUsers(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetUser(token, userId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminUpdateUser(token, userId, userData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(userData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetGuides(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/guides`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetPendingGuides(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/guides/pending`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminApproveGuide(token, userId, approved, reason = null) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/guides/${userId}/approve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ approved, reason }),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetExcursions(token, statusFilter = null) {
+  try {
+    const url = statusFilter 
+      ? `${API_BASE_URL}/api/admin/excursions?status_filter=${statusFilter}`
+      : `${API_BASE_URL}/api/admin/excursions`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetExcursion(token, excursionId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/excursions/${excursionId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminUpdateExcursion(token, excursionId, excursionData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/excursions/${excursionId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(excursionData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminDeleteExcursion(token, excursionId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/excursions/${excursionId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetBookings(token) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/bookings`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminGetBooking(token, bookingId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/bookings/${bookingId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+

@@ -9,6 +9,8 @@ class UserRead(schemas.BaseUser[int]):
     phone: str | None = None
     name: str
     is_guide: bool = False
+    # is_superuser уже включен в schemas.BaseUser[int], но явно указываем для гарантии
+    is_superuser: bool = False
 
 
 class UserCreate(schemas.BaseUserCreate):

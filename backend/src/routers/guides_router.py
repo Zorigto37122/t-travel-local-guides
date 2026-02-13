@@ -81,6 +81,12 @@ async def update_my_guide_profile(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail="Размер фотографии слишком большой. Максимальный размер: 7.5 МБ"
                 )
+            # Проверяем, что это валидный base64
+            if not data.photo.startswith('data:image'):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Неверный формат изображения. Ожидается base64 data URL."
+                )
             guide.photo = data.photo
         
         await session.commit()
@@ -89,9 +95,12 @@ async def update_my_guide_profile(
     except HTTPException:
         raise
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Ошибка при обновлении профиля гида: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при обновлении профиля: {str(e)}"
+            detail="Ошибка сервера при обновлении профиля. Попробуйте позже."
         )
 
 

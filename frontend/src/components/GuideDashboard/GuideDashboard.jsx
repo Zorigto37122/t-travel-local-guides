@@ -32,8 +32,11 @@ const GuideDashboard = () => {
       ]);
       setGuideProfile(profile);
       setExcursions(excursionsData);
+      // Обновляем photoUrl из профиля
       if (profile && profile.photo) {
         setPhotoUrl(profile.photo);
+      } else {
+        setPhotoUrl("");
       }
     } catch (err) {
       setError(translateError(err.message || "Не удалось загрузить данные"));
@@ -88,8 +91,12 @@ const GuideDashboard = () => {
         return;
       }
 
-      await updateGuideProfile(token, { photo: photoDataUrl });
-      setGuideProfile({ ...guideProfile, photo: photoDataUrl });
+      const updatedProfile = await updateGuideProfile(token, { photo: photoDataUrl });
+      // Обновляем состояние из ответа сервера
+      setGuideProfile(updatedProfile);
+      if (updatedProfile && updatedProfile.photo) {
+        setPhotoUrl(updatedProfile.photo);
+      }
       setPhotoFile(null);
       setError(null);
       alert("Фотография успешно обновлена");

@@ -49,6 +49,9 @@
 
 .guide-photo-section {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .guide-photo-preview {
@@ -78,6 +81,7 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .guide-photo-upload-btn,

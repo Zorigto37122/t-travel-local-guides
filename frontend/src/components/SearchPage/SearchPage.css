@@ -248,41 +248,46 @@
 
 .excursions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  max-width: 1600px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
   width: 100%;
-  margin-top: 40px;
+  margin: 40px auto 0;
   padding: 0 20px;
 }
 
 @media (min-width: 1600px) {
   .excursions-grid {
     grid-template-columns: repeat(4, 1fr);
+    max-width: 1200px;
   }
 }
 
 @media (min-width: 1400px) and (max-width: 1599px) {
   .excursions-grid {
     grid-template-columns: repeat(4, 1fr);
+    max-width: 1200px;
   }
 }
 
 @media (min-width: 1200px) and (max-width: 1399px) {
   .excursions-grid {
     grid-template-columns: repeat(3, 1fr);
+    max-width: 1000px;
   }
 }
 
 @media (min-width: 900px) and (max-width: 1199px) {
   .excursions-grid {
     grid-template-columns: repeat(3, 1fr);
+    max-width: 900px;
   }
 }
 
 @media (min-width: 600px) and (max-width: 899px) {
   .excursions-grid {
     grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
   }
 }
 
@@ -290,6 +295,7 @@
   .excursions-grid {
     grid-template-columns: repeat(1, 1fr);
     gap: 16px;
+    max-width: 100%;
   }
 }
 
