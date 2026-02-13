@@ -1,45 +1,63 @@
-import React from 'react';
-import './Footer.css';
-import logo from '../../assets/logo.svg';
+import React from "react";
+import "./Footer.css";
+import { Link } from "react-router-dom";
+import logo from "../../assets/logo.svg";
+import iconVK from "../../assets/vk_logo.svg";
+import iconTelegram from "../../assets/tg_logo.svg";
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="Footer">
-      <div className="Footer__bottom">
-        <div className="Footer__bottom-content">
-          <div className="Footer__left">
-            <div className="Footer__logo">
-              <img className="Footer__logo" src={logo} alt="T-Путешествия" />
+      <div className="Footer__container">
+        <div className="Footer__section Footer__section--brand">
+          <Link to="/" className="Footer__logo-link">
+            <img src={logo} alt="Т-Путешествия" className="Footer__logo" />
+            <div className="Footer__brand-text">
+              <p className="Footer__title">Т-Путешествия</p>
+              <p className="Footer__subtitle">Авторские Экскурсии</p>
             </div>
-            <div className="Footer__links">
-              <a href="#" className="Footer__bottom-link">Правила сервиса</a>
-              <a href="#" className="Footer__bottom-link">Обмен и возврат авиабилетов</a>
-              <a href="#" className="Footer__bottom-link">Условия акций</a>
-              <a href="#" className="Footer__bottom-link">В помощь туристам</a>
-              <a href="#" className="Footer__bottom-link">Как получить кэшбэк от Путешествий</a>
-              <a href="#" className="Footer__bottom-link">Условия рассрочки и кредита</a>
-              <a href="#" className="Footer__bottom-link">Документы для партнеров</a>
-            </div>
-            <div className="Footer__legal-links">
-              <a href="#" className="Footer__legal-link">Условия акции «Промокоды на покупку Авиабилетов»</a>
-              <a href="#" className="Footer__legal-link">Условия проведения маркетинговых акций «Т-Путешествия»</a>
-            </div>
-            <div className="Footer__copyright">
-              <span>© 2026 T-Travel. Все права защищены</span>
-            </div>
-          </div>
-          <div className="Footer__right">
-            <div className="Footer__phone">
-              <div className="Footer__phone-main">8 800 700-11-66 или 999</div>
-              <div className="Footer__phone-abroad">Из-за рубежа: 7 499 605-01-21</div>
-            </div>
-            <div className="Footer__social">
-              <a href="#" className="Footer__social-icon" aria-label="Чат">💬</a>
-              <a href="#" className="Footer__social-icon" aria-label="VKontakte">VK</a>
-              <a href="#" className="Footer__social-icon" aria-label="Odnoklassniki">OK</a>
-              <a href="#" className="Footer__social-icon" aria-label="Telegram">✈</a>
-            </div>
-          </div>
+          </Link>
+        </div>
+
+        <div className="Footer__section Footer__section--contact">
+          <h4 className="Footer__heading">Связь с нами</h4>
+          <a
+            href="tel:+78888888888"
+            className="Footer__contact-link Footer__contact-link--phone"
+          >
+            8 888 888-88-88
+          </a>
+          <a
+            href="mailto:support@ttravel.com"
+            className="Footer__contact-link Footer__contact-link--email"
+          >
+            support@ttravel.com
+          </a>
+        </div>
+      </div>
+
+      <div className="Footer__bottom-bar">
+        <p>© {currentYear} T-Travel. Все права защищены.</p>
+
+        <div className="Footer__social-links">
+          <a
+            href="https://vk.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="Footer__social-link"
+          >
+            <img src={iconVK} alt="ВКонтакте" />
+          </a>
+          <a
+            href="https://t.me"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="Footer__social-link"
+          >
+            <img src={iconTelegram} alt="Telegram" />
+          </a>
         </div>
       </div>
     </footer>
