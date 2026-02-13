@@ -51,7 +51,7 @@ const HomePage = () => {
     { id: 1, name: "Санкт-Петербург", country: "Россия", count: 450, img: "https://i.ibb.co/ZzyFPWG9/images-2021-08-30-1618617108sankt-peterburg-krasivie-mesta-foto-large.jpg" },
     { id: 2, name: "Москва", country: "Россия", count: 320, img: "https://i.ibb.co/JhvLWTv/8.webp" },
     { id: 3, name: "Казань", country: "Россия", count: 150, img: "https://i.ibb.co/zTzVRLs8/optimize.webp" },
-    { id: 4, name: "Сочи", country: "Россия", count: 200, img: "https://i.ibb.co/F4kgcsYS/26-picture-afb903ac.jpg" },
+    { id: 4, name: "Сочи", country: "Россия", count: 200, img: "https://i.ibb.co/DH5VwcFF/sochi.webp" },
     { id: 5, name: "Стамбул", country: "Турция", count: 75, img: "https://i.ibb.co/SDXGVPH8/1574264160-sultanahm.jpg" },
     { id: 6, name: "Вена", country: "Австрия", count: 29, img: "https://i.ibb.co/4RMmXfkk/a938f68769195411fb67644ac02908e5.jpg" },
   ];
