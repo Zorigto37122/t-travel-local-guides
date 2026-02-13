@@ -115,10 +115,11 @@
   margin: 0 0 14px 0;
   text-align: left;
   display: -webkit-box;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 
 
 .card-price-block {

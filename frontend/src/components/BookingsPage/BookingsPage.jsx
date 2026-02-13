@@ -12,10 +12,20 @@ const BookingsPage = () => {
   const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
 
+  // Функция для корректного получения URL фото
+  const getBookingPhoto = (photo) => {
+    if (!photo) return "https://dummyimage.com/400x350/f3f4f6/cccccc&text=Нет+фото";
+
+    if (photo.startsWith("data:image")) return photo; // base64
+    if (photo.startsWith("http")) return photo; // полный URL
+
+    // Относительный путь — добавляем базовый URL API
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    return `${apiUrl}${photo}`;
+  };
+
   useEffect(() => {
-    if (!user || !token) {
-      return;
-    }
+    if (!user || !token) return;
 
     const loadBookings = async () => {
       setLoading(true);
@@ -34,9 +44,7 @@ const BookingsPage = () => {
   }, [user, token]);
 
   const handleCancel = async (bookingId) => {
-    if (!window.confirm("Вы уверены, что хотите отменить это бронирование?")) {
-      return;
-    }
+    if (!window.confirm("Вы уверены, что хотите отменить это бронирование?")) return;
 
     setCancellingId(bookingId);
     try {
@@ -121,15 +129,19 @@ const BookingsPage = () => {
       ) : (
         <>
           {(() => {
-            const activeBookings = bookings.filter(b => b.status === "confirmed" || b.status === "pending");
-            const cancelledBookings = bookings.filter(b => b.status === "cancelled");
-            
+            const activeBookings = bookings.filter(
+              (b) => b.status === "confirmed" || b.status === "pending"
+            );
+            const cancelledBookings = bookings.filter(
+              (b) => b.status === "cancelled"
+            );
+
             const renderBookingCard = (booking) => (
               <div key={booking.booking_id} className="booking-card">
                 <div className="booking-card-image">
                   {booking.excursion_photo ? (
                     <img
-                      src={booking.excursion_photo}
+                      src={getBookingPhoto(booking.excursion_photo)}
                       alt={booking.excursion_title}
                     />
                   ) : (
@@ -138,13 +150,13 @@ const BookingsPage = () => {
                     </div>
                   )}
                 </div>
+
                 <div className="booking-card-content">
-                  <h2 className="booking-card-title">
-                    {booking.excursion_title}
-                  </h2>
+                  <h2 className="booking-card-title">{booking.excursion_title}</h2>
                   <p className="booking-card-location">
                     {booking.excursion_city}, {booking.excursion_country}
                   </p>
+
                   <div className="booking-card-details">
                     <div className="booking-detail">
                       <span className="booking-detail-label">Дата и время:</span>
@@ -181,6 +193,7 @@ const BookingsPage = () => {
                       </span>
                     </div>
                   </div>
+
                   {booking.status !== "cancelled" && (
                     <button
                       className="booking-cancel-button"
@@ -195,12 +208,14 @@ const BookingsPage = () => {
                 </div>
               </div>
             );
-            
+
             return (
               <>
                 {activeBookings.length > 0 && (
                   <div className="bookings-section">
-                    <h2 className="bookings-section-title">Активные бронирования</h2>
+                    <h2 className="bookings-section-title">
+                      Активные бронирования
+                    </h2>
                     <div className="bookings-list">
                       {activeBookings.map(renderBookingCard)}
                     </div>
@@ -208,7 +223,9 @@ const BookingsPage = () => {
                 )}
                 {cancelledBookings.length > 0 && (
                   <div className="bookings-section">
-                    <h2 className="bookings-section-title">Отмененные бронирования</h2>
+                    <h2 className="bookings-section-title">
+                      Отмененные бронирования
+                    </h2>
                     <div className="bookings-list">
                       {cancelledBookings.map(renderBookingCard)}
                     </div>
