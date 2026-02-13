@@ -68,7 +68,7 @@ export default function Header() {
               onClick={() => setShowMenu(!showMenu)}
             >
               <span>{user.name}</span>
-              <img className="Header__logo" src={lk_logo} alt="Личный кабинет" />
+              <img src={lk_logo} alt="Личный кабинет" />
             </button>
 
             {showMenu && (
@@ -121,7 +121,7 @@ export default function Header() {
         ) : (
           <a className="Header__LKLink" onClick={openSignForm}>
             <span>Личный кабинет</span>
-            <img className="Header__logo" src={lk_logo} alt="Личный кабинет" />
+            <img src={lk_logo} alt="Личный кабинет" />
           </a>
         )}
       </nav>
