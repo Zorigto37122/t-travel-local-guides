@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
+import "./App.css";
 
 import SearchPage from './pages/SearchPage/SearchPage.jsx'; 
 import SearchResultsPage from './pages/SearchResultsPage/SearchResultsPage.jsx';

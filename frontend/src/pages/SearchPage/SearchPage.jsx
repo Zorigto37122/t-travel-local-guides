@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./SearchPage.css";
 
 const SearchPage = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        country: '',
+        country: 'Россия',
         city: '',
         date: '',
         people: 1
@@ -18,17 +20,45 @@ const SearchPage = () => {
     }
 
     const handleSearch = () => {
+        if (!formData.city && !formData.country) {
+            alert("Пожалуйста, введите город или страну для поиска.");
+            return;
+        }
 
+        const params = new URLSearchParams({
+            city: formData.city || '',
+            country: formData.country || '',
+            date: formData.date || '',
+            people: formData.people
+        }).toString();
+        
+        navigate(`/results?${params}`);
+    };
+
+
+    const handleCityCardClick = (cityName) => {
+        const params = new URLSearchParams({
+            city: cityName
+        }).toString();
+        
+        navigate(`/results?${params}`);
     };
 
     const POPULAR_CITIES = [
-        { id: 1, name: 'Санкт-Петербург', count: 450, img: 'https://dummyimage.com/400x350/000/fff' },
-  { id: 2, name: 'Москва', count: 320, img: 'https://dummyimage.com/400x350/000/fff' },
-  { id: 3, name: 'Казань', count: 150, img: 'https://dummyimage.com/400x350/000/fff' },
-  { id: 4, name: 'Сочи', count: 200, img: 'https://dummyimage.com/400x350/000/fff' },
-  { id: 5, name: 'Стамбул', count: 75, img: 'https://dummyimage.com/400x350/000/fff' },
-  { id: 6, name: 'Вена', count: 29, img: 'https://dummyimage.com/400x350/000/fff' },
+        { id: 1, name: 'Санкт-Петербург', count: 450, img: 'https://i.ibb.co/ZzyFPWG9/images-2021-08-30-1618617108sankt-peterburg-krasivie-mesta-foto-large.jpg' },
+  { id: 2, name: 'Москва', count: 320, img: 'https://i.ibb.co/JhvLWTv/8.webp' },
+  { id: 3, name: 'Казань', count: 150, img: 'https://i.ibb.co/zTzVRLs8/optimize.webp' },
+  { id: 4, name: 'Париж', count: 200, img: 'https://i.ibb.co/F4kgcsYS/26-picture-afb903ac.jpg' },
+  { id: 5, name: 'Стамбул', count: 75, img: 'https://i.ibb.co/SDXGVPH8/1574264160-sultanahm.jpg' },
+  { id: 6, name: 'Вена', count: 29, img: 'https://i.ibb.co/4RMmXfkk/a938f68769195411fb67644ac02908e5.jpg' },
     ];
+
+//     https://ibb.co/TMDmJK0V
+// https://ibb.co/TMRv7Tyy
+// https://ibb.co/hqB5xNB
+// https://ibb.co/5hqSyBGZ
+// https://ibb.co/YFxBkK2D
+// https://ibb.co/7xJLrXB5
     const formattedPeople = `${formData.people} взрослый`;
 
     return (
@@ -39,7 +69,7 @@ const SearchPage = () => {
             <div className="search-wrapper">
                 <div className="search-field">
                     <input
-                        type="contry"
+                        type="text"
                         name="country"
                         placeholder="Страна"
                         value={formData.country}
@@ -115,7 +145,7 @@ const SearchPage = () => {
             <h3 className="second-page-title">Популярные города у наших путешественников</h3>
             <div className="cities-grid">
                 {POPULAR_CITIES.map((city) => (
-                    <div key={city.id} className="city-card">
+                    <div key={city.id} className="city-card" onClick={() => handleCityCardClick(city.name)}>
                         <div className="city-image-wrapper">
                             <img src={city.img} alt={city.name} />
                         </div>

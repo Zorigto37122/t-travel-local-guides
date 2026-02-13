@@ -1,0 +1,49 @@
+/* Простой CSS-шаблон для SearchResultsPage */
+.SearchResultsPage {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.SearchResultsPage__title {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.ResultsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.ExcursionCard {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.ExcursionCard:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ExcursionCard__title {
+    font-size: 18px;
+    margin-top: 0;
+    color: #ffd700;
+}
+
+.ExcursionCard__button {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
