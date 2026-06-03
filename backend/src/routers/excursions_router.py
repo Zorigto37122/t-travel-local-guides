@@ -7,15 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.auth import fastapi_users
 from src.database import get_session
-from src.models import Booking, Client, Excursion, Guide, Payment
+from src.models import Booking, Client, Excursion, Guide, Payment, Review, User
 from src.schemas.excursion import (
     AvailableDatesResponse,
     AvailableTimeSlot,
     BookingCreate,
     BookingResponse,
     BookingWithExcursion,
+    ExcursionCardRead,
     ExcursionCreate,
     ExcursionRead,
+    ReviewRead,
 )
 
 
@@ -25,7 +27,47 @@ current_active_user = fastapi_users.current_user(active=True)
 current_active_superuser = fastapi_users.current_user(active=True, superuser=True)
 
 
-@router.get("/excursions", response_model=List[ExcursionRead])
+def _guide_avg_subquery():
+    """Подзапрос: средний рейтинг гида по всем его экскурсиям."""
+    guide_excursions = select(Excursion.excursion_id).where(
+        Excursion.guide_id == Guide.guide_id
+    ).correlate(Guide).scalar_subquery()
+    return (
+        select(func.avg(Review.rating))
+        .where(Review.excursion_id.in_(guide_excursions))
+        .correlate(Guide)
+        .scalar_subquery()
+    )
+
+
+def _build_card(row, photos: str) -> ExcursionCardRead:
+    exc = row.Excursion
+    avg = round(float(row.avg_rating), 1) if row.avg_rating else None
+    guide_avg = round(float(row.guide_avg_rating), 1) if row.guide_avg_rating else None
+    return ExcursionCardRead(
+        excursion_id=exc.excursion_id,
+        title=exc.title,
+        country=exc.country,
+        city=exc.city,
+        difficulty=exc.difficulty,
+        description=exc.description,
+        photos=photos,
+        price_per_person=float(exc.price_per_person),
+        price_type=exc.price_type or "per_person",
+        accepted_payment_methods=exc.accepted_payment_methods,
+        status=exc.status,
+        available_slots=exc.available_slots,
+        transport=exc.transport,
+        duration=exc.duration,
+        guide_name=row.guide_name,
+        guide_avatar=row.guide_avatar,
+        avg_rating=avg,
+        reviews_count=int(row.reviews_count),
+        guide_avg_rating=guide_avg,
+    )
+
+
+@router.get("/excursions", response_model=List[ExcursionCardRead])
 async def search_excursions(
     country: Optional[str] = Query(default=None),
     city: Optional[str] = Query(default=None),
@@ -33,42 +75,91 @@ async def search_excursions(
     people: int = Query(default=1, ge=1),
     has_children: bool = Query(default=False),
     session: AsyncSession = Depends(get_session),
-) -> List[ExcursionRead]:
-    """
-    Поиск экскурсий по стране, городу и количеству людей.
-    Возвращает только одобренные экскурсии.
-    """
-    query = select(Excursion).where(Excursion.status == "approved")
+) -> List[ExcursionCardRead]:
+    query = (
+        select(
+            Excursion,
+            User.name.label("guide_name"),
+            Guide.photo.label("guide_avatar"),
+            func.avg(Review.rating).label("avg_rating"),
+            func.count(Review.review_id).label("reviews_count"),
+            _guide_avg_subquery().label("guide_avg_rating"),
+        )
+        .join(Guide, Excursion.guide_id == Guide.guide_id)
+        .join(User, Guide.user_id == User.id)
+        .outerjoin(Review, Review.excursion_id == Excursion.excursion_id)
+        .where(Excursion.status == "approved")
+        .group_by(Excursion.excursion_id, User.name, Guide.photo, Guide.guide_id)
+    )
 
     if country:
         query = query.where(Excursion.country.ilike(f"%{country}%"))
     if city:
         query = query.where(Excursion.city.ilike(f"%{city}%"))
-
-    # простая проверка доступных мест
     query = query.where(
-        (Excursion.available_slots.is_(None))
-        | (Excursion.available_slots >= people)
+        (Excursion.available_slots.is_(None)) | (Excursion.available_slots >= people)
     )
 
     result = await session.execute(query)
-    excursions = result.scalars().all()
+    rows = result.all()
 
-    return excursions
+    from src.utils import enrich_excursion_photos
+    return [_build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city)) for row in rows]
 
 
-@router.get("/excursions/{excursion_id}", response_model=ExcursionRead)
+@router.get("/excursions/{excursion_id}", response_model=ExcursionCardRead)
 async def get_excursion_by_id(
     excursion_id: int,
     session: AsyncSession = Depends(get_session),
-) -> ExcursionRead:
-    """
-    Получить экскурсию по ID.
-    """
-    excursion = await session.get(Excursion, excursion_id)
-    if excursion is None:
+) -> ExcursionCardRead:
+    query = (
+        select(
+            Excursion,
+            User.name.label("guide_name"),
+            Guide.photo.label("guide_avatar"),
+            func.avg(Review.rating).label("avg_rating"),
+            func.count(Review.review_id).label("reviews_count"),
+            _guide_avg_subquery().label("guide_avg_rating"),
+        )
+        .join(Guide, Excursion.guide_id == Guide.guide_id)
+        .join(User, Guide.user_id == User.id)
+        .outerjoin(Review, Review.excursion_id == Excursion.excursion_id)
+        .where(Excursion.excursion_id == excursion_id)
+        .group_by(Excursion.excursion_id, User.name, Guide.photo, Guide.guide_id)
+    )
+    result = await session.execute(query)
+    row = result.one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail="Экскурсия не найдена")
-    return excursion
+    from src.utils import enrich_excursion_photos
+    photos = enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city)
+    return _build_card(row, photos)
+
+
+@router.get("/excursions/{excursion_id}/reviews", response_model=List[ReviewRead])
+async def get_excursion_reviews(
+    excursion_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> List[ReviewRead]:
+    query = (
+        select(Review, User.name.label("client_name"))
+        .join(Client, Review.client_id == Client.client_id)
+        .join(User, Client.user_id == User.id)
+        .where(Review.excursion_id == excursion_id)
+        .order_by(Review.date.desc())
+    )
+    result = await session.execute(query)
+    rows = result.all()
+    return [
+        ReviewRead(
+            review_id=row.Review.review_id,
+            rating=row.Review.rating,
+            comment=row.Review.comment,
+            date=row.Review.date.strftime("%d %B %Y"),
+            client_name=row.client_name,
+        )
+        for row in rows
+    ]
 
 
 @router.get("/excursions/{excursion_id}/available-dates", response_model=AvailableDatesResponse)

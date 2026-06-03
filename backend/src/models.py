@@ -14,13 +14,16 @@ class Excursion(Base):
     title : Mapped[str] = mapped_column(String(200), nullable=False)
     country: Mapped[str] = mapped_column(String(100), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False, default="")
-    difficulty: Mapped[str] = mapped_column(String(20),nullable=False)
+    difficulty: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     photos: Mapped[str | None] = mapped_column(Text, nullable=True)
     price_per_person: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     accepted_payment_methods: Mapped[str] = mapped_column(String(50), default="online,cash")
-    status: Mapped[str] = mapped_column(String(20), default="draft",nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)
     available_slots: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    transport: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    duration: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    price_type: Mapped[str | None] = mapped_column(String(20), nullable=True, default="per_person")
     
     
       

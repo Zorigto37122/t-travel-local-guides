@@ -14,6 +14,9 @@ class ExcursionBase(BaseModel):
     price_per_person: float
     accepted_payment_methods: str = "online,cash"
     available_slots: Optional[int] = Field(default=None, ge=0)
+    transport: Optional[str] = None
+    duration: Optional[str] = None
+    price_type: Optional[str] = "per_person"
 
 
 class ExcursionCreate(ExcursionBase):
@@ -26,14 +29,20 @@ class ExcursionRead(ExcursionBase):
 
     @model_validator(mode='after')
     def enrich_photos(self):
-        """Автоматически подставляет фотки для экскурсий с Москвой из assets/excursions"""
         from src.utils import enrich_excursion_photos
-        
-        # Всегда проверяем возможность обогащения фоток
-        enriched_photos = enrich_excursion_photos(self.photos, self.title, self.city)
-        self.photos = enriched_photos
-        
+        self.photos = enrich_excursion_photos(self.photos, self.title, self.city)
         return self
+
+    class Config:
+        from_attributes = True
+
+
+class ExcursionCardRead(ExcursionRead):
+    guide_name: Optional[str] = None
+    guide_avatar: Optional[str] = None
+    avg_rating: Optional[float] = None
+    reviews_count: int = 0
+    guide_avg_rating: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -102,4 +111,15 @@ class AvailableDatesResponse(BaseModel):
     excursion_id: int
     available_slots: Optional[int]
     time_slots: List[AvailableTimeSlot]
+
+
+class ReviewRead(BaseModel):
+    review_id: int
+    rating: int
+    comment: Optional[str] = None
+    date: str
+    client_name: str
+
+    class Config:
+        from_attributes = True
 

@@ -1,7 +1,6 @@
 #root {
   margin: 0 auto;
   padding: 0;
-  text-align: center;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -10,8 +9,37 @@
 
 .App__content {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   overflow-x: hidden;
   width: 100%;
-  box-sizing: border-box;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Tinkoffsans', sans-serif;
+  transition: color 0.15s;
+}
+
+.btn-back:hover { color: #111; }
+
+.btn-back--fixed {
+  position: fixed;
+  top: 70px;
+  left: 20px;
+  z-index: 500;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }

@@ -1,12 +1,12 @@
-import logo from "../../assets/logo.svg";
-import lk_logo from "../../assets/lk_logo.svg";
+import logo from "../../assets/images/logo.svg";
+import lk_logo from "../../assets/images/lk_logo.svg";
 import { Link, useNavigate } from "react-router-dom";
-import SignForm from "../SingForm/SignForm";
+import SignForm from "../SignForm/SignForm";
 import { useState, useEffect, useRef } from "react";
 import "./Header.css";
 
 import { useAuth } from "../../AuthContext.jsx";
-import { checkIfGuide } from "../../api";
+import { checkIfGuide } from "../../api/userApi";
 
 export default function Header() {
   const [signFormActivity, setSignFormActivity] = useState(false);
