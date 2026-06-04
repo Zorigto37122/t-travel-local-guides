@@ -1,15 +1,16 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from src.config import settings
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+import os
+
 from fastapi import Depends
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from src.config import settings
 from src.models import User
 
 
 async_engine = create_async_engine(
     url=settings.DATABASE_URL_asyncpg,
-    echo=True,
-    
+    echo=os.getenv("DB_ECHO", "false").lower() == "true",
 )
 
 

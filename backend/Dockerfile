@@ -32,4 +32,4 @@ ENV UVICORN_LIMIT_MAX_REQUESTS_BODY=52428800
 
 EXPOSE 8000
 
-CMD alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000 --limit-max-requests 1000 --limit-concurrency 1000 --timeout-keep-alive 75 --timeout-graceful-shutdown 30
+CMD alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000 --limit-concurrency 1000 --timeout-keep-alive 75 --timeout-graceful-shutdown 30

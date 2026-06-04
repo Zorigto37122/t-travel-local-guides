@@ -22,10 +22,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Настройка статических файлов для фотографий экскурсий
+# Статические файлы — фото экскурсий
 assets_dir = Path(__file__).parent.parent / "assets" / "excursions"
 assets_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static/excursions", StaticFiles(directory=str(assets_dir)), name="excursion_photos")
+
+# Статические файлы — фото гидов
+guides_dir = Path(__file__).parent.parent / "assets" / "guides"
+guides_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/guides", StaticFiles(directory=str(guides_dir)), name="guide_photos")
 
 app.include_router(auth_router)
 app.include_router(excursions_router)

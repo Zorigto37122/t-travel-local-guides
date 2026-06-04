@@ -63,3 +63,8 @@ class GuideApprovalRequest(BaseModel):
     """Схема для одобрения/отклонения гида"""
     approved: bool
     reason: Optional[str] = None
+
+
+class ExcursionStatusUpdate(BaseModel):
+    """Смена статуса экскурсии модератором/админом"""
+    status: str

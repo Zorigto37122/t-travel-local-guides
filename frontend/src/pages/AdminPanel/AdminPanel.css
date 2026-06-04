@@ -1,0 +1,350 @@
+/* ── Admin panel (custom T-Bank style) ── */
+.adm-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: #f6f7f8;
+  font-family: 'Tinkoffsans', sans-serif;
+  color: #111;
+}
+
+/* ── Top bar ── */
+.adm-topbar {
+  height: 60px;
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1px solid #ececec;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.adm-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #ffdd2d;
+  color: #111;
+  font-weight: 700;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adm-brand-text {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.adm-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-user {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ── Body layout ── */
+.adm-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.adm-sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #ececec;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.adm-nav-item {
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.adm-nav-item:hover { background: #f3f4f6; color: #111; }
+.adm-nav-item--active {
+  background: #fff7cc;
+  color: #111;
+  font-weight: 600;
+}
+
+.adm-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+
+/* ── Section header ── */
+.adm-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.adm-section-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.adm-count {
+  font-size: 15px;
+  font-weight: 600;
+  color: #aaa;
+}
+
+.adm-section-actions { display: flex; gap: 10px; }
+
+/* ── Tabs (filters) ── */
+.adm-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.adm-tab {
+  background: #fff;
+  border: 1.5px solid #e6e7ea;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.adm-tab:hover { border-color: #d0d1d5; }
+.adm-tab--active {
+  background: #ffdd2d;
+  border-color: #ffdd2d;
+  color: #111;
+  font-weight: 600;
+}
+
+/* ── Table ── */
+.adm-table-wrap {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.adm-table thead th {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #eef0f2;
+  white-space: nowrap;
+}
+
+.adm-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f2f3f5;
+  color: #222;
+  vertical-align: middle;
+}
+
+.adm-table tbody tr:last-child td { border-bottom: none; }
+.adm-table tbody tr:hover { background: #fafbfc; }
+
+.adm-mono { font-variant-numeric: tabular-nums; color: #aaa; }
+.adm-nowrap { white-space: nowrap; }
+.adm-cell-title { font-weight: 600; color: #111; max-width: 280px; }
+.adm-dim { color: #aaa; font-size: 13px; }
+
+.adm-userline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.adm-userline--stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.adm-ava {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.adm-ava--ph {
+  background: linear-gradient(135deg, #ffdd2d 0%, #f5a623 100%);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.adm-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.adm-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ── */
+.adm-btn {
+  border: none;
+  border-radius: 11px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.15s, background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.adm-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.adm-btn--sm { padding: 6px 12px; font-size: 13px; border-radius: 9px; }
+
+.adm-btn--primary { background: #ffdd2d; color: #111; }
+.adm-btn--primary:hover:not(:disabled) { filter: brightness(0.96); }
+
+.adm-btn--ghost { background: #fff; color: #333; border: 1.5px solid #e6e7ea; }
+.adm-btn--ghost:hover:not(:disabled) { border-color: #c9cacd; }
+
+.adm-btn--danger { background: #fff; color: #d3392b; border: 1.5px solid #f5cfca; }
+.adm-btn--danger:hover:not(:disabled) { background: #fde8e8; }
+
+/* ── Badges ── */
+.adm-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.adm-badge--neutral { background: #eef0f2; color: #555; }
+.adm-badge--ok { background: #e3f9ec; color: #00a049; }
+.adm-badge--accent { background: #fff3d6; color: #b07d00; }
+.adm-badge--info { background: #e6f0fd; color: #1f7ae0; }
+.adm-badge--muted { background: #eef0f2; color: #999; }
+.adm-badge--danger { background: #fde8e8; color: #d3392b; }
+
+/* ── States ── */
+.adm-state {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  padding: 48px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 15px;
+}
+.adm-state--error { color: #c0392b; }
+
+/* ── Access denied ── */
+.adm-denied-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #f6f7f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Tinkoffsans', sans-serif;
+  padding: 20px;
+}
+.adm-denied-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  padding: 40px;
+  text-align: center;
+  max-width: 420px;
+}
+.adm-denied-card h2 { margin: 0 0 12px; font-size: 22px; color: #111; }
+.adm-denied-card p { margin: 0 0 22px; color: #666; font-size: 15px; }
+
+@media (max-width: 860px) {
+  .adm-sidebar { width: 56px; padding: 10px 6px; }
+  .adm-nav-item {
+    font-size: 0;
+    padding: 12px 0;
+    text-align: center;
+    border-radius: 10px;
+  }
+  .adm-nav-item::first-letter { font-size: 18px; }
+  .adm-content { padding: 20px 16px; }
+  .adm-section-title { font-size: 20px; }
+  .adm-topbar-right .adm-user { display: none; }
+}
+
+@media (max-width: 600px) {
+  .adm-body { flex-direction: column; }
+  .adm-sidebar {
+    width: 100%;
+    flex-direction: row;
+    padding: 8px 12px;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid #ececec;
+  }
+  .adm-nav-item {
+    font-size: 13px !important;
+    padding: 8px 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .adm-nav-item::first-letter { font-size: inherit; }
+  .adm-content { padding: 16px 12px; overflow-y: auto; }
+  .adm-table thead th { font-size: 11px; padding: 10px 10px; }
+  .adm-table tbody td { padding: 10px 10px; font-size: 13px; }
+}

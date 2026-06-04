@@ -1,17 +1,15 @@
 #root {
   margin: 0 auto;
   padding: 0;
-  text-align: center;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 .App__content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  box-sizing: border-box;
 }
+

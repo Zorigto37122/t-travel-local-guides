@@ -1,0 +1,330 @@
+.gd-loading {
+  padding: 120px 20px 40px;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
+  font-family: 'Tinkoffsans', sans-serif;
+}
+
+.gd-page {
+  background: #f6f7f8;
+  min-height: 100vh;
+  padding-top: 16px;
+}
+
+.gd-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 40px 60px;
+  font-family: 'Tinkoffsans', sans-serif;
+}
+
+.gd-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 22px;
+}
+
+.gd-error {
+  background: #fde8e8;
+  color: #c0392b;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+/* ── Hero ── */
+.gd-hero {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.gd-avatar-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.gd-avatar {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.gd-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffdd2d 0%, #f5a623 100%);
+  font-size: 44px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.gd-avatar-edit {
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  transition: background 0.15s;
+}
+.gd-avatar-edit:hover { background: #e8e9ec; }
+
+.gd-hero-info { flex: 1; min-width: 0; }
+
+.gd-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 4px;
+}
+
+.gd-contact {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 18px;
+}
+
+.gd-stats {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 20px;
+}
+
+.gd-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gd-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+}
+
+.gd-stat-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.gd-hero-actions,
+.gd-photo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gd-photo-saved {
+  font-size: 14px;
+  color: #00a049;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+/* ── Buttons ── */
+.gd-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.gd-btn--primary { background: #ffdd2d; color: #111; }
+.gd-btn--primary:hover { filter: brightness(0.96); }
+.gd-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.gd-btn--accent {
+  background: #fff7cc;
+  color: #8a6d00;
+}
+.gd-btn--accent:hover { background: #ffefa3; }
+
+.gd-btn--ghost {
+  background: #fff;
+  color: #333;
+  border: 1.5px solid #e6e7ea;
+}
+.gd-btn--ghost:hover { border-color: #d0d1d5; }
+
+/* ── Bio card ── */
+.gd-bio-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.gd-bio-textarea {
+  width: 100%;
+  border: 1.5px solid #e6e7ea;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111;
+  background: #fff;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 96px;
+  transition: border-color 0.15s;
+  display: block;
+}
+.gd-bio-textarea:focus { outline: none; border-color: #ffdd2d; }
+
+.gd-bio-save {
+  margin-top: 12px;
+}
+
+/* ── Section head ── */
+.gd-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.gd-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.gd-add-link {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.gd-add-link:hover { color: #111; }
+
+/* ── Empty ── */
+.gd-empty {
+  background: #fff;
+  border-radius: 16px;
+  padding: 48px 20px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+.gd-empty p {
+  color: #999;
+  font-size: 15px;
+  margin: 0 0 18px;
+}
+
+/* ── Excursion cards ── */
+.gd-excursions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gd-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.gd-card-main { flex: 1; min-width: 220px; }
+
+.gd-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.gd-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.gd-card-loc {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 8px;
+}
+
+.gd-card-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+.gd-card-price-type {
+  font-size: 13px;
+  font-weight: 400;
+  color: #999;
+}
+
+.gd-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Status badges ── */
+.gd-badge {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.gd-badge--ok { background: #e3f9ec; color: #00a049; }
+.gd-badge--pending { background: #fff3d6; color: #b07d00; }
+.gd-badge--draft { background: #eef0f2; color: #888; }
+.gd-badge--rejected { background: #fde8e8; color: #d3392b; }
+
+@media (max-width: 768px) {
+  .gd-container { padding: 22px 16px 48px; }
+  .gd-hero { flex-direction: column; align-items: center; text-align: center; padding: 20px; }
+  .gd-stats { justify-content: center; gap: 20px; }
+  .gd-hero-actions, .gd-photo-actions { justify-content: center; }
+  .gd-card { flex-direction: column; align-items: flex-start; }
+  .gd-title { font-size: 22px; }
+}
+
+@media (max-width: 480px) {
+  .gd-container { padding: 16px 12px 48px; }
+  .gd-hero { padding: 16px; gap: 16px; }
+  .gd-stats { gap: 16px; }
+  .gd-stat-value { font-size: 20px; }
+  .gd-name { font-size: 20px; }
+  .gd-bio-card { padding: 16px; }
+  .gd-card { padding: 16px; }
+  .gd-section-head { flex-wrap: wrap; gap: 10px; }
+  .gd-card-actions { width: 100%; }
+  .gd-btn { font-size: 13px; padding: 9px 14px; }
+}

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.auth import auth_backend, fastapi_users
 from src.schemas.user import UserRead, UserCreate, UserUpdate
 from src.database import get_session
-from src.models import Guide, Client
+from src.models import Client
 from src.auth.manager import get_user_manager
 from fastapi_users import BaseUserManager
 
@@ -55,17 +55,9 @@ async def register(
         client = Client(user_id=user_id)
         session.add(client)
     
-    # If user selected to be a guide, create guide profile
-    if is_guide:
-        guide_result = await session.execute(
-            select(Guide).where(Guide.user_id == user_id)
-        )
-        guide = guide_result.scalar_one_or_none()
-        
-        if guide is None:
-            guide = Guide(user_id=user_id)
-            session.add(guide)
-    
+    # Guide profile создаётся только после одобрения администратором
+    # (is_guide=True означает "заявка подана", Guide-запись создаётся в admin_router)
+
     await session.commit()
     
     # Get the updated user from the database
