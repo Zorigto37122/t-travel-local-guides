@@ -136,9 +136,10 @@ export default function GuidePage() {
           guide.reviews.length > 0 ? (
             <div className="guide-reviews-list">
               {guide.reviews.map((r) => {
-                const [pros, cons] = r.comment
+                const [rawPros, cons] = r.comment
                   ? r.comment.split("\n---\n")
                   : ["Отличная экскурсия", null];
+                const pros = rawPros && rawPros !== "None" && rawPros !== "null" ? rawPros : null;
                 return (
                   <ReviewCard
                     key={r.review_id}

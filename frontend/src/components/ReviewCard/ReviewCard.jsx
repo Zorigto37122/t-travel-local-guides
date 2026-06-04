@@ -18,7 +18,7 @@ export default function ReviewCard({ clientName, subtitle, rating, pros, cons })
       </div>
       <div className="review-card-pros">
         <img src={prosIcon} alt="+" className="review-icon" />
-        {pros}
+        {pros || "Без комментария"}
       </div>
       <div className="review-card-cons">
         <img src={consIcon} alt="-" className="review-icon" />
