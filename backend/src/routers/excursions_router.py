@@ -53,7 +53,7 @@ def _guide_avg_subquery():
     )
 
 
-def _build_card(row, photos: str) -> ExcursionCardRead:
+def _build_card(row, photos: str, *, full: bool = True) -> ExcursionCardRead:
     exc = row.Excursion
     avg = round(float(row.avg_rating), 1) if row.avg_rating else None
     guide_avg = round(float(row.guide_avg_rating), 1) if row.guide_avg_rating else None
@@ -64,7 +64,7 @@ def _build_card(row, photos: str) -> ExcursionCardRead:
         city=exc.city,
         difficulty=exc.difficulty,
         short_description=exc.short_description,
-        description=exc.description,
+        description=exc.description if full else None,
         photos=photos,
         price_per_person=float(exc.price_per_person),
         price_type=exc.price_type or "per_person",
@@ -76,7 +76,7 @@ def _build_card(row, photos: str) -> ExcursionCardRead:
         guide_id=exc.guide_id,
         guide_name=row.guide_name,
         guide_avatar=row.guide_avatar,
-        guide_bio=row.guide_bio,
+        guide_bio=row.guide_bio if full else None,
         guide_experience=row.guide_experience,
         avg_rating=avg,
         reviews_count=int(row.reviews_count),
@@ -167,7 +167,8 @@ async def search_excursions(
     date: Optional[str] = Query(default=None),
     people: int = Query(default=1, ge=1),
     has_children: bool = Query(default=False),
-    limit: int = Query(default=100, ge=1, le=500),
+    sort: Optional[str] = Query(default=None),  # price_asc | price_desc | rating | newest
+    limit: int = Query(default=20, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     session: AsyncSession = Depends(get_session),
 ) -> List[ExcursionCardRead]:
@@ -232,13 +233,22 @@ async def search_excursions(
         except (ValueError, AttributeError):
             pass  # Некорректный формат даты — игнорируем фильтр
 
+    if sort == "price_asc":
+        query = query.order_by(Excursion.price_per_person.asc())
+    elif sort == "price_desc":
+        query = query.order_by(Excursion.price_per_person.desc())
+    elif sort == "rating":
+        query = query.order_by(func.avg(Review.rating).desc().nulls_last())
+    else:
+        query = query.order_by(Excursion.excursion_id.desc())
+
     query = query.offset(offset).limit(limit)
 
     result = await session.execute(query)
     rows = result.all()
 
     return [
-        _build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city))
+        _build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city), full=False)
         for row in rows
     ]
 
