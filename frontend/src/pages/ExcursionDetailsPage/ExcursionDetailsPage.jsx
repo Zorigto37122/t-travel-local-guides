@@ -752,9 +752,10 @@ export default function ExcursionDetailsPage() {
           <div className="reviews-layout">
             <div className="reviews-list">
               {reviews.length > 0 ? reviews.slice(0, 3).map((r) => {
-                const [pros, cons] = r.comment
+                const [rawPros, cons] = r.comment
                   ? r.comment.split("\n---\n")
                   : ["Отличная экскурсия", null];
+                const pros = rawPros && rawPros !== "None" && rawPros !== "null" ? rawPros : null;
                 return (
                   <div key={r.review_id} className="review-card">
                     <div className="review-card-header">
@@ -767,7 +768,7 @@ export default function ExcursionDetailsPage() {
                       </span>
                     </div>
                     <div className="review-card-pros">
-                      <img src={prosIcon} alt="+" className="review-icon" />{pros}
+                      <img src={prosIcon} alt="+" className="review-icon" />{pros || "Без комментария"}
                     </div>
                     <div className="review-card-cons">
                       <img src={consIcon} alt="-" className="review-icon" />{cons || "Минусов нет"}
