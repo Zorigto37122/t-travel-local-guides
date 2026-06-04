@@ -20,6 +20,7 @@ const ExcursionForm = () => {
     transport: "",
     duration: "",
     price_type: "per_person",
+    short_description: "",
     description: "",
     photos: "",
     price_per_person: "",
@@ -53,6 +54,7 @@ const ExcursionForm = () => {
         transport: excursion.transport || "",
         duration: excursion.duration || "",
         price_type: excursion.price_type || "per_person",
+        short_description: excursion.short_description || "",
         description: excursion.description || "",
         photos: photos,
         price_per_person: excursion.price_per_person?.toString() || "",
@@ -116,35 +118,35 @@ const ExcursionForm = () => {
       return;
     }
 
-    // Ограничиваем количество фотографий (например, максимум 10)
-    const maxPhotos = 10;
-    const filesToAdd = imageFiles.slice(0, maxPhotos - photoFiles.length);
-    
-    if (filesToAdd.length < imageFiles.length) {
-      setError(`Можно загрузить максимум ${maxPhotos} фотографий`);
-    }
+    setPhotoFiles(prev => [...prev, ...imageFiles]);
 
-    setPhotoFiles(prev => [...prev, ...filesToAdd]);
-    
-    // Создаем превью для новых файлов
-    filesToAdd.forEach(file => {
+    imageFiles.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreviews(prev => [...prev, {
-          file: file,
-          preview: reader.result,
-          name: file.name
-        }]);
+        setPhotoPreviews(prev => [...prev, { file, preview: reader.result, name: file.name }]);
       };
       reader.readAsDataURL(file);
     });
-    
+
     setError(null);
   };
 
   const removePhoto = (index) => {
-    setPhotoFiles(prev => prev.filter((_, i) => i !== index));
+    const preview = photoPreviews[index];
+    if (preview.file) {
+      setPhotoFiles(prev => prev.filter(f => f !== preview.file));
+    }
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const setCoverPhoto = (index) => {
+    if (index === 0) return;
+    setPhotoPreviews(prev => {
+      const next = [...prev];
+      const [item] = next.splice(index, 1);
+      next.unshift(item);
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -153,23 +155,23 @@ const ExcursionForm = () => {
     setError(null);
 
     try {
-      let photosString = "";
-      
-      // Загружаем новые файлы на сервер
+      // Upload new files in order of appearance in photoPreviews (batches of 10)
+      const newFiles = photoPreviews.filter(p => p.file).map(p => p.file);
       let uploadedUrls = [];
-      if (photoFiles.length > 0) {
-        uploadedUrls = await uploadExcursionPhotos(token, photoFiles);
+      for (let i = 0; i < newFiles.length; i += 10) {
+        const batch = newFiles.slice(i, i + 10);
+        const batchUrls = await uploadExcursionPhotos(token, batch);
+        uploadedUrls = [...uploadedUrls, ...batchUrls];
       }
-      
-      // Собираем существующие URL (не base64) из превью
-      // Используем originalUrl если есть, иначе preview (но не base64)
-      const existingUrls = photoPreviews
-        .filter(preview => !preview.file && preview.preview && !preview.preview.startsWith('data:image'))
-        .map(preview => preview.originalUrl || preview.preview);
-      
-      // Объединяем загруженные URL и существующие URL
-      const allUrls = [...uploadedUrls, ...existingUrls];
-      photosString = allUrls.length > 0 ? allUrls.join(',') : null;
+
+      // Rebuild ordered list preserving photoPreviews order
+      let newIdx = 0;
+      const allUrls = photoPreviews.map(p => {
+        if (p.file) return uploadedUrls[newIdx++] ?? null;
+        return p.originalUrl || (p.preview?.startsWith('data:image') ? null : p.preview);
+      }).filter(Boolean);
+
+      const photosString = allUrls.length > 0 ? allUrls.join(',') : null;
 
       const submissionData = {
         ...formData,
@@ -301,19 +303,49 @@ const ExcursionForm = () => {
         </div>
 
         <div className="excursion-form-field">
-          <label htmlFor="description">Описание</label>
+          <label htmlFor="short_description">
+            Краткое описание
+            <span style={{ fontWeight: 400, fontSize: 12, color: '#999', marginLeft: 8 }}>
+              показывается на карточке и вверху страницы · до 300 символов
+            </span>
+          </label>
+          <textarea
+            id="short_description"
+            name="short_description"
+            value={formData.short_description}
+            onChange={handleChange}
+            rows={2}
+            maxLength={300}
+            placeholder="Кратко и цепко — что особенного в этой экскурсии?"
+          />
+        </div>
+
+        <div className="excursion-form-field">
+          <label htmlFor="description">
+            Подробное описание
+            <span style={{ fontWeight: 400, fontSize: 12, color: '#999', marginLeft: 8 }}>
+              # Заголовок · ## Подзаголовок · ### Малый заголовок
+            </span>
+          </label>
           <textarea
             id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
-            rows={6}
-            placeholder="Подробное описание экскурсии..."
+            rows={8}
+            placeholder={"# Об экскурсии\nПодробное описание...\n\n## Место встречи\nАдрес или ориентир...\n\n## Что взять с собой\n..."}
           />
         </div>
 
         <div className="excursion-form-field">
-          <label htmlFor="photos">Фотографии</label>
+          <label htmlFor="photos">
+            Фотографии
+            {photoPreviews.length > 0 && (
+              <span style={{ fontWeight: 400, fontSize: 13, color: '#888', marginLeft: 8 }}>
+                {photoPreviews.length} шт · первая — обложка карточки
+              </span>
+            )}
+          </label>
           <input
             type="file"
             id="photos"
@@ -326,9 +358,9 @@ const ExcursionForm = () => {
           {photoPreviews.length > 0 && (
             <div className="excursion-photo-preview-container">
               {photoPreviews.map((preview, index) => (
-                <div 
-                  key={index} 
-                  className={`excursion-photo-preview-item ${!preview.file ? 'excursion-photo-existing' : ''}`}
+                <div
+                  key={index}
+                  className={`excursion-photo-preview-item ${index === 0 ? 'excursion-photo-cover' : ''}`}
                 >
                   <img src={preview.preview} alt={`Preview ${index + 1}`} />
                   <button
@@ -338,16 +370,20 @@ const ExcursionForm = () => {
                   >
                     ×
                   </button>
-                  <span className="excursion-photo-name">{preview.name}</span>
+                  {index === 0 ? (
+                    <span className="excursion-photo-cover-badge">Обложка</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="excursion-photo-set-cover-btn"
+                      onClick={() => setCoverPhoto(index)}
+                      title="Сделать обложкой"
+                    >
+                      ★ Обложка
+                    </button>
+                  )}
                 </div>
               ))}
-            </div>
-          )}
-          {formData.photos && !photoPreviews.length && (
-            <div className="excursion-photo-url-info">
-              <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                Текущие фотографии: {formData.photos.split(',').length} URL
-              </p>
             </div>
           )}
         </div>

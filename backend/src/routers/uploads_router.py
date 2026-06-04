@@ -28,10 +28,10 @@ async def upload_excursion_photos(
     Возвращает список URL загруженных файлов.
     Фотки сохраняются с UUID именами для уникальности.
     """
-    if len(files) > 10:
+    if len(files) > 20:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Можно загрузить максимум 10 фотографий"
+            detail="Можно загрузить максимум 20 фотографий за раз"
         )
     
     if len(files) == 0:

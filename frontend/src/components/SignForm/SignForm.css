@@ -1,13 +1,17 @@
 .SignForm {
   color: black;
-  width: 600px;
+  width: min(600px, calc(100vw - 32px));
+  max-height: 92vh;
+  overflow-y: auto;
   align-items: center;
   justify-content: center;
-  padding: 40px 50px 40px 50px;
+  padding: 40px 50px;
   background-color: #ffffff;
   border: 0px;
   border-radius: 20px;
   box-shadow: 0 4px 8px rgba(56, 56, 56, 0.156);
+  /* центрирование на всех браузерах */
+  margin: auto;
 }
 
 
@@ -79,21 +83,31 @@
 .InputForm {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 50%;
   align-items: stretch;
+  width: 100%;
 }
 .InputForm input {
   width: 100%;
   height: 50px;
-  padding: 10px;
+  padding: 10px 14px;
   margin-bottom: 10px;
   border-radius: 10px;
-  border: 0;
-  background-color: #e3e3e32b;
+  border: 1.5px solid #e8e8e8;
+  background-color: #f7f7f7;
   box-sizing: border-box;
   font-size: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.188); 
+  font-family: 'Tinkoffsans', sans-serif;
+  transition: border-color 0.15s, background 0.15s;
+  outline: none;
+}
+
+.InputForm input:focus {
+  border-color: #ffdd2d;
+  background-color: #fff;
+}
+
+.InputForm input::placeholder {
+  color: #aaa;
 }
 
 .SignForm__close-button {
@@ -168,4 +182,29 @@
   cursor: pointer;
   margin: 0;
   flex-shrink: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .SignForm {
+    padding: 32px 24px;
+    border-radius: 16px;
+  }
+
+  .SignForm__content h3 {
+    font-size: 20px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .SignForm {
+    padding: 24px 16px;
+    border-radius: 14px;
+    max-height: 88vh;
+  }
+
+  .SignForm__tab { font-size: 14px !important; padding: 9px 10px !important; }
+  .InputForm input { height: 46px; font-size: 15px; }
+  .SignForm__submit-button { height: 46px !important; }
 }

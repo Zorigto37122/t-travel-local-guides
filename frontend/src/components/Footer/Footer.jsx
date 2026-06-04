@@ -23,44 +23,9 @@ export default function Footer() {
               </div>
             </Link>
             <p className="Footer__brand-desc">
-              Платформа для бронирования авторских экскурсий от местных гидов по всему миру
+              Бронируйте авторские экскурсии от проверенных местных гидов —
+              по России и всему миру
             </p>
-          </div>
-
-          {/* Nav columns */}
-          <div className="Footer__nav-group">
-            <div className="Footer__nav-col">
-              <h4 className="Footer__nav-heading">Туристам</h4>
-              <Link to="/search" className="Footer__nav-link">Найти экскурсию</Link>
-              <Link to="/bookings" className="Footer__nav-link">Мои бронирования</Link>
-              <Link to="/profile" className="Footer__nav-link">Личный кабинет</Link>
-            </div>
-
-            <div className="Footer__nav-col">
-              <h4 className="Footer__nav-heading">Гидам</h4>
-              <Link to="/guide/dashboard" className="Footer__nav-link">Мои экскурсии</Link>
-              <Link to="/guide/excursions/new" className="Footer__nav-link">Создать экскурсию</Link>
-              <Link to="/guide/calendar" className="Footer__nav-link">Календарь</Link>
-            </div>
-
-            <div className="Footer__nav-col">
-              <h4 className="Footer__nav-heading">О проекте</h4>
-              <a href="#" className="Footer__nav-link">Как это работает</a>
-              <a href="#" className="Footer__nav-link">Правила сервиса</a>
-              <a href="#" className="Footer__nav-link">Помощь</a>
-            </div>
-          </div>
-
-          {/* Contacts */}
-          <div className="Footer__contacts">
-            <h4 className="Footer__nav-heading">Связь с нами</h4>
-            <a href="tel:+78007001166" className="Footer__phone">
-              8 800 700-11-66
-            </a>
-            <span className="Footer__phone-note">Бесплатно по России</span>
-            <a href="mailto:support@t-travel.ru" className="Footer__email">
-              support@t-travel.ru
-            </a>
             <div className="Footer__social">
               <a
                 href="https://vk.com"
@@ -82,6 +47,51 @@ export default function Footer() {
               </a>
             </div>
           </div>
+
+          {/* Nav columns */}
+          <div className="Footer__nav-group">
+            <div className="Footer__nav-col">
+              <h4 className="Footer__nav-heading">Туристам</h4>
+              <Link to="/search" className="Footer__nav-link">Найти экскурсию</Link>
+              <Link to="/bookings" className="Footer__nav-link">Мои бронирования</Link>
+              <Link to="/favorites" className="Footer__nav-link">Избранное</Link>
+              <Link to="/profile" className="Footer__nav-link">Личный кабинет</Link>
+            </div>
+
+            <div className="Footer__nav-col">
+              <h4 className="Footer__nav-heading">Гидам</h4>
+              <Link to="/guide/dashboard" className="Footer__nav-link">Кабинет гида</Link>
+              <Link to="/guide/excursions/new" className="Footer__nav-link">Создать экскурсию</Link>
+              <Link to="/guide/excursions/new" className="Footer__nav-link">Расписание экскурсий</Link>
+              <Link to="/guide/calendar" className="Footer__nav-link">Календарь бронирований</Link>
+            </div>
+
+            <div className="Footer__nav-col">
+              <h4 className="Footer__nav-heading">О сервисе</h4>
+              <a href="#" className="Footer__nav-link">Как это работает</a>
+              <a href="#" className="Footer__nav-link">Стать гидом</a>
+              <a href="#" className="Footer__nav-link">Правила сервиса</a>
+              <a href="#" className="Footer__nav-link">Помощь</a>
+            </div>
+          </div>
+
+          {/* Contacts */}
+          <div className="Footer__contacts">
+            <h4 className="Footer__nav-heading">Связь с нами</h4>
+            <a href="tel:+78007001166" className="Footer__phone">
+              8 800 700-11-66
+            </a>
+            <span className="Footer__phone-note">Бесплатно по России</span>
+            <a href="mailto:support@t-travel.ru" className="Footer__email">
+              support@t-travel.ru
+            </a>
+            <div className="Footer__features">
+              <span className="Footer__feature-tag">Отзывы</span>
+              <span className="Footer__feature-tag">Рейтинги гидов</span>
+              <span className="Footer__feature-tag">Избранное</span>
+              <span className="Footer__feature-tag">Безопасная оплата</span>
+            </div>
+          </div>
         </div>
 
         <div className="Footer__divider" />
@@ -93,6 +103,7 @@ export default function Footer() {
           <div className="Footer__bottom-links">
             <a href="#" className="Footer__bottom-link">Политика конфиденциальности</a>
             <a href="#" className="Footer__bottom-link">Условия использования</a>
+            <a href="#" className="Footer__bottom-link">Реквизиты</a>
           </div>
         </div>
 

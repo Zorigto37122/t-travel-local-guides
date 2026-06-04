@@ -12,16 +12,15 @@ const BookingsPage = () => {
   const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
 
-  // Функция для корректного получения URL фото
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+  // Берём первое фото из comma-separated строки и строим URL
   const getBookingPhoto = (photo) => {
-    if (!photo) return "https://dummyimage.com/400x350/f3f4f6/cccccc&text=Нет+фото";
-
-    if (photo.startsWith("data:image")) return photo; // base64
-    if (photo.startsWith("http")) return photo; // полный URL
-
-    // Относительный путь — добавляем базовый URL API
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    return `${apiUrl}${photo}`;
+    if (!photo) return null;
+    const first = photo.split(",")[0].trim();
+    if (!first) return null;
+    if (first.startsWith("data:image") || first.startsWith("http")) return first;
+    return `${apiUrl}${first}`;
   };
 
   useEffect(() => {
@@ -72,18 +71,20 @@ const BookingsPage = () => {
 
   const getStatusLabel = (status) => {
     const labels = {
-      confirmed: "Подтверждено",
-      pending: "Ожидает подтверждения",
-      cancelled: "Отменено",
+      confirmed:  "Подтверждено",
+      pending:    "Ожидает подтверждения",
+      cancelled:  "Отменено",
+      completed:  "Завершено",
     };
     return labels[status] || status;
   };
 
   const getStatusClass = (status) => {
     const classes = {
-      confirmed: "booking-status-confirmed",
-      pending: "booking-status-pending",
-      cancelled: "booking-status-cancelled",
+      confirmed:  "booking-status-confirmed",
+      pending:    "booking-status-pending",
+      cancelled:  "booking-status-cancelled",
+      completed:  "booking-status-completed",
     };
     return classes[status] || "";
   };
@@ -129,85 +130,64 @@ const BookingsPage = () => {
       ) : (
         <>
           {(() => {
-            const activeBookings = bookings.filter(
-              (b) => b.status === "confirmed" || b.status === "pending"
-            );
-            const cancelledBookings = bookings.filter(
-              (b) => b.status === "cancelled"
-            );
+            const activeBookings    = bookings.filter((b) => b.status === "confirmed" || b.status === "pending");
+            const completedBookings = bookings.filter((b) => b.status === "completed");
+            const cancelledBookings = bookings.filter((b) => b.status === "cancelled");
 
-            const renderBookingCard = (booking) => (
-              <div key={booking.booking_id} className="booking-card">
-                <div className="booking-card-image">
-                  {booking.excursion_photo ? (
-                    <img
-                      src={getBookingPhoto(booking.excursion_photo)}
-                      alt={booking.excursion_title}
-                    />
-                  ) : (
-                    <div className="booking-card-image-placeholder">
-                      Нет фото
-                    </div>
-                  )}
-                </div>
-
-                <div className="booking-card-content">
-                  <h2 className="booking-card-title">{booking.excursion_title}</h2>
-                  <p className="booking-card-location">
-                    {booking.excursion_city}, {booking.excursion_country}
-                  </p>
-
-                  <div className="booking-card-details">
-                    <div className="booking-detail">
-                      <span className="booking-detail-label">Дата и время:</span>
-                      <span className="booking-detail-value">
-                        {formatDate(booking.date)}
-                      </span>
-                    </div>
-                    <div className="booking-detail">
-                      <span className="booking-detail-label">Количество человек:</span>
-                      <span className="booking-detail-value">
-                        {booking.number_of_people}
-                      </span>
-                    </div>
-                    <div className="booking-detail">
-                      <span className="booking-detail-label">Цена за человека:</span>
-                      <span className="booking-detail-value">
-                        {booking.price_per_person} ₽
-                      </span>
-                    </div>
-                    <div className="booking-detail">
-                      <span className="booking-detail-label">Итого:</span>
-                      <span className="booking-detail-value booking-total">
-                        {booking.total_amount} ₽
-                      </span>
-                    </div>
-                    <div className="booking-detail">
-                      <span className="booking-detail-label">Статус:</span>
-                      <span
-                        className={`booking-detail-value ${getStatusClass(
-                          booking.status
-                        )}`}
-                      >
-                        {getStatusLabel(booking.status)}
-                      </span>
-                    </div>
+            const renderBookingCard = (booking) => {
+              const photoUrl = getBookingPhoto(booking.excursion_photo);
+              const goToExcursion = () => navigate(`/excursions/${booking.excursion_id}`);
+              return (
+                <div key={booking.booking_id} className="booking-card">
+                  <div className="booking-card-image" onClick={goToExcursion} style={{ cursor: "pointer" }}>
+                    {photoUrl
+                      ? <img src={photoUrl} alt={booking.excursion_title} />
+                      : <div className="booking-card-image-placeholder">Нет фото</div>
+                    }
                   </div>
-
-                  {booking.status !== "cancelled" && (
-                    <button
-                      className="booking-cancel-button"
-                      onClick={() => handleCancel(booking.booking_id)}
-                      disabled={cancellingId === booking.booking_id}
-                    >
-                      {cancellingId === booking.booking_id
-                        ? "Отмена..."
-                        : "Отменить бронирование"}
-                    </button>
-                  )}
+                  <div className="booking-card-content">
+                    <h2 className="booking-card-title booking-card-title--link" onClick={goToExcursion}>
+                      {booking.excursion_title}
+                      <span className="booking-card-arrow"> →</span>
+                    </h2>
+                    <p className="booking-card-location">{booking.excursion_city}, {booking.excursion_country}</p>
+                    <div className="booking-card-details">
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Дата и время:</span>
+                        <span className="booking-detail-value">{formatDate(booking.date)}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Количество человек:</span>
+                        <span className="booking-detail-value">{booking.number_of_people}</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Цена за человека:</span>
+                        <span className="booking-detail-value">{booking.price_per_person} ₽</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Итого:</span>
+                        <span className="booking-detail-value booking-total">{booking.total_amount} ₽</span>
+                      </div>
+                      <div className="booking-detail">
+                        <span className="booking-detail-label">Статус:</span>
+                        <span className={`booking-detail-value ${getStatusClass(booking.status)}`}>
+                          {getStatusLabel(booking.status)}
+                        </span>
+                      </div>
+                    </div>
+                    {booking.status !== "cancelled" && booking.status !== "completed" && (
+                      <button
+                        className="booking-cancel-button"
+                        onClick={() => handleCancel(booking.booking_id)}
+                        disabled={cancellingId === booking.booking_id}
+                      >
+                        {cancellingId === booking.booking_id ? "Отмена..." : "Отменить бронирование"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            };
 
             return (
               <>
@@ -221,11 +201,17 @@ const BookingsPage = () => {
                     </div>
                   </div>
                 )}
+                {completedBookings.length > 0 && (
+                  <div className="bookings-section">
+                    <h2 className="bookings-section-title">Завершённые экскурсии</h2>
+                    <div className="bookings-list">
+                      {completedBookings.map(renderBookingCard)}
+                    </div>
+                  </div>
+                )}
                 {cancelledBookings.length > 0 && (
                   <div className="bookings-section">
-                    <h2 className="bookings-section-title">
-                      Отмененные бронирования
-                    </h2>
+                    <h2 className="bookings-section-title">Отменённые бронирования</h2>
                     <div className="bookings-list">
                       {cancelledBookings.map(renderBookingCard)}
                     </div>

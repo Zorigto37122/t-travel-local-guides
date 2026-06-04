@@ -76,7 +76,12 @@ const GuideCalendar = () => {
   return (
     <div className="guide-calendar-container">
       <div className="guide-calendar-header">
-        <h1 className="guide-calendar-title">Календарь бронирований</h1>
+        <div>
+          <button className="guide-calendar-back-btn" onClick={() => navigate("/guide/dashboard")}>
+            ← К моим экскурсиям
+          </button>
+          <h1 className="guide-calendar-title">Календарь бронирований</h1>
+        </div>
       </div>
 
       {error && <div className="guide-calendar-error">{error}</div>}

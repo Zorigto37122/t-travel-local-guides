@@ -40,6 +40,8 @@ services:
     env_file:
       - pg.env
       - secrets.env
+    volumes:
+      - ./backend/assets:/src/assets
     networks:
       - app-network
     healthcheck:

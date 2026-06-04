@@ -36,8 +36,24 @@ export default function SignForm({ open, toClose }) {
     }
   }, [open]);
 
+  // Синхронизируем состояние при закрытии через ESC
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const handleClose = () => {
+      document.body.classList.remove("overflow-y-hidden");
+      toClose(false);
+    };
+    dialog.addEventListener("close", handleClose);
+    return () => dialog.removeEventListener("close", handleClose);
+  }, [toClose]);
+
+  // Закрытие по клику на бэкдроп
+  const handleBackdropClick = (e) => {
+    if (e.target === dialogRef.current) toClose(false);
+  };
+
   return createPortal(
-    <dialog ref={dialogRef} className={`SignForm SignForm--${formType}`}>
+    <dialog ref={dialogRef} className={`SignForm SignForm--${formType}`} onClick={handleBackdropClick}>
       <div className="SignForm__container">
         <div className="SignForm__switcher">
           <Button

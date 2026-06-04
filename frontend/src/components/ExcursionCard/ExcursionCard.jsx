@@ -24,6 +24,7 @@ const ExcursionCard = ({
     type,
     duration,
     title,
+    short_description,
     description,
     price,
     price_per_person,
@@ -67,7 +68,7 @@ const ExcursionCard = ({
     const cardTransport = transport || "";
     const cardDuration = duration || null;
     const cardType = type || null;
-    const cardDescription = description || (city && country ? `Экскурсия по ${city}, ${country}` : "");
+    const cardDescription = short_description || (city && country ? `Экскурсия по ${city}, ${country}` : "");
     const reviewsText = getNoun(cardReviewsCount, 'оценка', 'оценки', 'оценок');
 
     return (

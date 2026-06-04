@@ -7,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.auth import fastapi_users
 from src.database import get_session
-from src.models import User, Guide, Excursion, Booking, Client
+from src.models import User, Guide, Excursion, Booking, Client, Moderator
 from src.schemas.admin import (
     AdminUserRead,
     AdminUserUpdate,
     AdminGuideWithUser,
     AdminBookingRead,
     GuideApprovalRequest,
+    ExcursionStatusUpdate,
 )
 from src.schemas.excursion import ExcursionRead, ExcursionCreate
 from src.schemas.guide import GuideRead
@@ -266,6 +267,46 @@ async def update_excursion(
     for field, value in update_data.items():
         setattr(excursion, field, value)
     
+    await session.commit()
+    await session.refresh(excursion)
+    return excursion
+
+
+ALLOWED_EXCURSION_STATUSES = {"approved", "pending_review", "draft", "rejected"}
+
+
+@router.patch("/excursions/{excursion_id}/status", response_model=ExcursionRead)
+async def set_excursion_status(
+    excursion_id: int,
+    data: ExcursionStatusUpdate,
+    admin_user: User = Depends(current_active_superuser),
+    session: AsyncSession = Depends(get_session),
+) -> ExcursionRead:
+    """Сменить статус экскурсии (одобрить / отклонить / вернуть в черновик)."""
+    if data.status not in ALLOWED_EXCURSION_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Недопустимый статус. Разрешено: {', '.join(sorted(ALLOWED_EXCURSION_STATUSES))}",
+        )
+
+    excursion = await session.get(Excursion, excursion_id)
+    if excursion is None:
+        raise HTTPException(status_code=404, detail="Экскурсия не найдена")
+
+    excursion.status = data.status
+
+    # При одобрении проставляем модератора
+    if data.status == "approved":
+        moderator_result = await session.execute(
+            select(Moderator).where(Moderator.user_id == admin_user.id)
+        )
+        moderator = moderator_result.scalar_one_or_none()
+        if moderator is None:
+            moderator = Moderator(user_id=admin_user.id)
+            session.add(moderator)
+            await session.flush()
+        excursion.moderator_id = moderator.moderator_id
+
     await session.commit()
     await session.refresh(excursion)
     return excursion

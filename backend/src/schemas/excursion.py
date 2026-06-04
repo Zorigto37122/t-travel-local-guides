@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -9,6 +9,7 @@ class ExcursionBase(BaseModel):
     country: str
     city: str
     difficulty: str
+    short_description: Optional[str] = None
     description: Optional[str] = None
     photos: Optional[str] = None
     price_per_person: float
@@ -38,8 +39,11 @@ class ExcursionRead(ExcursionBase):
 
 
 class ExcursionCardRead(ExcursionRead):
+    guide_id: Optional[int] = None
     guide_name: Optional[str] = None
     guide_avatar: Optional[str] = None
+    guide_bio: Optional[str] = None
+    guide_experience: Optional[str] = None
     avg_rating: Optional[float] = None
     reviews_count: int = 0
     guide_avg_rating: Optional[float] = None
@@ -119,7 +123,47 @@ class ReviewRead(BaseModel):
     comment: Optional[str] = None
     date: str
     client_name: str
+    excursion_title: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class ReviewCreate(BaseModel):
+    excursion_id: int
+    rating: int = Field(ge=1, le=10)
+    comment: Optional[str] = None
+
+
+# ── Расписание экскурсии (когда гид может её проводить) ──────────────────────
+
+class AvailabilityRule(BaseModel):
+    """Повторяющееся недельное правило."""
+    weekday: int = Field(ge=0, le=6)  # 0=Пн .. 6=Вс
+    time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    capacity: Optional[int] = Field(default=None, ge=1)
+
+    class Config:
+        from_attributes = True
+
+
+class ExtraSlot(BaseModel):
+    """Разовая дата+время."""
+    date: date
+    time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    capacity: Optional[int] = Field(default=None, ge=1)
+
+    class Config:
+        from_attributes = True
+
+
+class ExcursionScheduleRead(BaseModel):
+    availability: List[AvailabilityRule] = []
+    extra_slots: List[ExtraSlot] = []
+
+
+class ExcursionScheduleUpdate(BaseModel):
+    """Полная замена расписания экскурсии."""
+    availability: List[AvailabilityRule] = []
+    extra_slots: List[ExtraSlot] = []
 

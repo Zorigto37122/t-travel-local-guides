@@ -5,7 +5,6 @@ import Footer from "../components/Footer/Footer";
 
 const MainLayout = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -15,12 +14,7 @@ const MainLayout = () => {
 
   return (
     <>
-      <Header />
-      {showBack && (
-        <button className="btn-back btn-back--fixed" onClick={() => navigate(-1)}>
-          ← Назад
-        </button>
-      )}
+      <Header showBack={showBack} />
       <div className="App__content">
         <Outlet />
       </div>

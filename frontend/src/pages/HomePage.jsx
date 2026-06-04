@@ -108,7 +108,17 @@ const HomePage = () => {
           <label>Город</label>
           <AutocompleteInput
             value={formData.city}
-            onChange={(val) => setFormData((prev) => ({ ...prev, city: val }))}
+            onChange={(val) => {
+              setFormData((prev) => {
+                const update = { ...prev, city: val };
+                const detectedCountry = Object.entries(locations.citiesByCountry)
+                  .find(([, cities]) => cities.map(c => c.toLowerCase()).includes(val.toLowerCase()))?.[0];
+                if (detectedCountry && detectedCountry !== prev.country) {
+                  update.country = detectedCountry;
+                }
+                return update;
+              });
+            }}
             placeholder="Город"
             suggestions={locations.citiesByCountry[formData.country] ?? Object.values(locations.citiesByCountry).flat()}
             onSubmit={handleSearch}

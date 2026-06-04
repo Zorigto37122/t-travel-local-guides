@@ -246,6 +246,106 @@ export async function getGuideBookings(token) {
   }
 }
 
+// Расписание экскурсии (когда гид может её проводить)
+export async function getExcursionSchedule(token, excursionId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me/excursions/${excursionId}/schedule`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function saveExcursionSchedule(token, excursionId, schedule) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/me/excursions/${excursionId}/schedule`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(schedule),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+// Reviews
+export async function submitReview(token, excursionId, rating, comment) {
+  const response = await fetch(`${API_BASE_URL}/api/reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ excursion_id: excursionId, rating, comment }),
+  });
+  return handleResponse(response);
+}
+
+export async function canReviewExcursion(token, excursionId) {
+  const response = await fetch(`${API_BASE_URL}/api/excursions/${excursionId}/can-review`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function getMyReview(token, excursionId) {
+  const response = await fetch(`${API_BASE_URL}/api/excursions/${excursionId}/my-review`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (response.status === 204 || response.status === 200) {
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  }
+  return handleResponse(response);
+}
+
+// Favorites
+export async function getFavorites(token) {
+  const response = await fetch(`${API_BASE_URL}/api/favorites/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function addFavorite(token, excursionId) {
+  const response = await fetch(`${API_BASE_URL}/api/favorites?excursion_id=${excursionId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function removeFavorite(token, excursionId) {
+  const response = await fetch(`${API_BASE_URL}/api/favorites/${excursionId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (response.status === 204) return null;
+  return handleResponse(response);
+}
+
+export async function checkFavorite(token, excursionId) {
+  const response = await fetch(`${API_BASE_URL}/api/favorites/check/${excursionId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+// Guide public profile
+export async function getPublicGuideProfile(guideId) {
+  const response = await fetch(`${API_BASE_URL}/api/guides/${guideId}`);
+  return handleResponse(response);
+}
+
 // Admin API functions
 export async function adminGetExcursions(token, statusFilter = null) {
   try {
@@ -291,6 +391,25 @@ export async function adminUpdateExcursion(token, excursionId, excursionData) {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(excursionData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      throw new Error(translateError("Не удалось подключиться к серверу. Проверьте подключение к интернету."));
+    }
+    throw error;
+  }
+}
+
+export async function adminSetExcursionStatus(token, excursionId, status) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/excursions/${excursionId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
     });
     return handleResponse(response);
   } catch (error) {

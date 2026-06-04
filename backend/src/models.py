@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, Boolean
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, Boolean
 
 class Base(DeclarativeBase):
     pass
@@ -15,6 +15,7 @@ class Excursion(Base):
     country: Mapped[str] = mapped_column(String(100), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False, default="")
     difficulty: Mapped[str] = mapped_column(String(50), nullable=False)
+    short_description: Mapped[str | None] = mapped_column(String(300), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     photos: Mapped[str | None] = mapped_column(Text, nullable=True)
     price_per_person: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
@@ -33,7 +34,14 @@ class Excursion(Base):
     moderator_id: Mapped[int | None] = mapped_column(ForeignKey("moderators.moderator_id"),nullable=True)
     moderator: Mapped["Moderator"] = relationship(back_populates="moderated_excursions")
     reviews: Mapped[list["Review"]] = relationship(back_populates="excursion")
-    
+    favorites: Mapped[list["Favorite"]] = relationship(back_populates="excursion")
+    availability: Mapped[list["ExcursionAvailability"]] = relationship(
+        back_populates="excursion", cascade="all, delete-orphan", passive_deletes=True
+    )
+    extra_slots: Mapped[list["ExcursionSlot"]] = relationship(
+        back_populates="excursion", cascade="all, delete-orphan", passive_deletes=True
+    )
+
 class Booking(Base):
     __tablename__ = "bookings"
     
@@ -93,7 +101,9 @@ class Guide(Base):
     
     guide_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    photo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    photo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    experience: Mapped[str | None] = mapped_column(String(100), nullable=True)
     
     
     user: Mapped["User"] = relationship(back_populates="guide_profile")
@@ -116,15 +126,16 @@ class GuideStatistics(Base):
     
 class Client(Base):
     __tablename__ = "clients"
-    
+
     client_id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, nullable=False)
-    
-    
-    user: Mapped["User"] = relationship(back_populates="client_profile") 
+
+
+    user: Mapped["User"] = relationship(back_populates="client_profile")
     bookings: Mapped[list["Booking"]] = relationship(back_populates="client")
     reviews: Mapped[list["Review"]] = relationship(back_populates="client")
     notifications: Mapped[list["Notification"]] = relationship(back_populates="client")
+    favorites: Mapped[list["Favorite"]] = relationship(back_populates="client")
     
     
 class Payment(Base):
@@ -163,8 +174,50 @@ class Review(Base):
     
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    date: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    
+    date: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
 
     client: Mapped["Client"] = relationship(back_populates="reviews")
     excursion: Mapped["Excursion"] = relationship(back_populates="reviews")
+
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+
+    favorite_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("clients.client_id"), nullable=False)
+    excursion_id: Mapped[int] = mapped_column(Integer, ForeignKey("excursions.excursion_id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    client: Mapped["Client"] = relationship(back_populates="favorites")
+    excursion: Mapped["Excursion"] = relationship(back_populates="favorites")
+
+
+class ExcursionAvailability(Base):
+    """Повторяющееся недельное правило: в какие дни недели и время гид проводит экскурсию."""
+    __tablename__ = "excursion_availability"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    excursion_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("excursions.excursion_id", ondelete="CASCADE"), nullable=False
+    )
+    weekday: Mapped[int] = mapped_column(Integer, nullable=False)  # 0=Пн .. 6=Вс
+    time: Mapped[str] = mapped_column(String(5), nullable=False)   # "HH:MM"
+    capacity: Mapped[int | None] = mapped_column(Integer, nullable=True)  # None → excursion.available_slots
+
+    excursion: Mapped["Excursion"] = relationship(back_populates="availability")
+
+
+class ExcursionSlot(Base):
+    """Разовый слот: конкретная дата и время, когда гид может провести экскурсию."""
+    __tablename__ = "excursion_slots"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    excursion_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("excursions.excursion_id", ondelete="CASCADE"), nullable=False
+    )
+    slot_date: Mapped[date] = mapped_column(Date, nullable=False)
+    time: Mapped[str] = mapped_column(String(5), nullable=False)   # "HH:MM"
+    capacity: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    excursion: Mapped["Excursion"] = relationship(back_populates="extra_slots")

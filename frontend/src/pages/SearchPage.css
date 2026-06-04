@@ -546,16 +546,18 @@
   .page-title { font-size: 26px; }
 
   .search-wrapper {
-    flex-wrap: wrap;
-  }
-
-  .search-field {
-    flex: 1 1 140px;
+    grid-template-columns: 1fr 1fr;
+    width: calc(100% - 32px);
   }
 
   .search-button {
-    width: 100%;
+    grid-column: 1 / -1;
     padding: 12px;
+  }
+
+  .filter-row-wrapper {
+    grid-template-columns: 1fr 1fr;
+    width: calc(100% - 32px);
   }
 
   .feature-boxes {
@@ -565,10 +567,35 @@
   .cities-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .second-page-title { font-size: 22px; margin: 36px 0 18px; }
 }
 
 @media (max-width: 480px) {
+  .search-wrapper {
+    grid-template-columns: 1fr;
+    width: calc(100% - 24px);
+    padding: 10px;
+  }
+
+  .filter-row-wrapper {
+    grid-template-columns: 1fr;
+    width: calc(100% - 24px);
+    padding: 16px 10px 10px;
+  }
+
+  .filter-btn--primary {
+    grid-column: 1 / -1;
+  }
+
   .cities-grid {
     grid-template-columns: 1fr;
   }
+
+  .excursions-grid {
+    gap: 16px;
+  }
+
+  .page-title { font-size: 22px; margin: 18px 0 14px; }
+  .results-title { font-size: 22px; }
 }

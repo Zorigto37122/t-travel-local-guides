@@ -2,13 +2,26 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./ExcursionDetailsPage.css";
 import ExcursionCard from "../components/ExcursionCard/ExcursionCard";
-import { getExcursionById, getExcursionReviews, getAvailableDates, createBooking, searchExcursions } from "../api/excursionsApi";
+import {
+  getExcursionById, getExcursionReviews, getAvailableDates, createBooking, searchExcursions,
+  checkFavorite, addFavorite, removeFavorite, submitReview, getMyReview, canReviewExcursion,
+  getPublicGuideProfile,
+} from "../api/excursionsApi";
 import { useAuth } from "../AuthContext.jsx";
 import prosIcon from "../assets/images/pros.svg";
 import consIcon from "../assets/images/cons.svg";
 import { getRatingColor } from "../utils/ratingColor";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+function getRatingLabel(rating) {
+  if (rating >= 9) return "Превосходно";
+  if (rating >= 8) return "Отлично";
+  if (rating >= 7) return "Хорошо";
+  if (rating >= 6) return "Неплохо";
+  if (rating >= 5) return "Удовлетворительно";
+  return "Плохо";
+}
 
 function parsePhotos(photosStr) {
   if (!photosStr) return [];
@@ -24,11 +37,76 @@ function parsePhotos(photosStr) {
 
 function getGuideAvatarUrl(avatar) {
   if (!avatar) return null;
-  if (avatar.startsWith("http")) return avatar;
+  if (avatar.startsWith("http") || avatar.startsWith("data:")) return avatar;
   return `${API_URL}${avatar}`;
 }
 
 const PLACEHOLDER = "https://dummyimage.com/600x400/f3f4f6/cccccc&text=Фото";
+
+function renderInline(text) {
+  // **жирный** → <strong>
+  const parts = text.split(/(\*\*[^*]+\*\*)/);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : part
+  );
+}
+
+function renderDescription(text) {
+  if (!text) return [<p key="empty">Описание экскурсии будет добавлено позже.</p>];
+  const lines = text.split('\n');
+  const result = [];
+  let paraLines = [];
+  let key = 0;
+
+  const flushPara = () => {
+    if (paraLines.length === 0) return;
+    result.push(
+      <p key={key++}>
+        {paraLines.reduce((acc, line, i) => {
+          if (i > 0) acc.push(<br key={`br-${i}`} />);
+          acc.push(...[renderInline(line)].flat());
+          return acc;
+        }, [])}
+      </p>
+    );
+    paraLines = [];
+  };
+
+  for (const line of lines) {
+    const t = line.trimStart(); // убираем ведущие пробелы/\r перед проверкой
+    let m;
+    if ((m = t.match(/^###\s*(.*)/))) {
+      flushPara();
+      result.push(<h4 key={key++} className="desc-h3">{renderInline(m[1].trim())}</h4>);
+    } else if ((m = t.match(/^##(?!#)\s*(.*)/))) {
+      flushPara();
+      result.push(<h3 key={key++} className="desc-h2">{renderInline(m[1].trim())}</h3>);
+    } else if ((m = t.match(/^#(?!#)\s*(.*)/))) {
+      flushPara();
+      result.push(<h2 key={key++} className="desc-h1">{renderInline(m[1].trim())}</h2>);
+    } else if (t === '') {
+      flushPara();
+    } else {
+      paraLines.push(line);
+    }
+  }
+  flushPara();
+  return result;
+}
+
+function plainText(text, maxLen = 160) {
+  if (!text) return '';
+  // убираем символы заголовков и склеиваем строки
+  const plain = text
+    .split('\n')
+    .map(l => l.replace(/^#{1,6}\s*/, '').trim())
+    .filter(Boolean)
+    .join(' ');
+  return plain.length > maxLen ? plain.slice(0, maxLen) + '…' : plain;
+}
 
 function Lightbox({ photos, startIndex, onClose }) {
   const [current, setCurrent] = React.useState(startIndex);
@@ -94,10 +172,14 @@ function PhotoGallery({ photos, title }) {
 
   if (!photos || photos.length === 0) return null;
 
-  // Для picsum-ссылок вида /seed/key/W/H парсим ratio из URL
+  // Парсим ratio из URL: поддерживает /W/H (picsum) и ?w=X&h=Y (unsplash)
   const urlRatio = (url) => {
-    const m = url.match(/\/(\d+)\/(\d+)(?:\?.*)?$/);
-    return m ? parseInt(m[1]) / parseInt(m[2]) : null;
+    const mPath = url.match(/\/(\d+)\/(\d+)(?:\?.*)?$/);
+    if (mPath) return parseInt(mPath[1]) / parseInt(mPath[2]);
+    const wm = url.match(/[?&]w=(\d+)/);
+    const hm = url.match(/[?&]h=(\d+)/);
+    if (wm && hm) return parseInt(wm[1]) / parseInt(hm[1]);
+    return null;
   };
 
   const getRatio = (idx) =>
@@ -143,11 +225,10 @@ function PhotoGallery({ photos, title }) {
   const colPx = (idxs) => {
     if (idxs.length === 1) return Math.round(getRatio(idxs[0]) * GALLERY_H);
     const r1 = getRatio(idxs[0]), r2 = getRatio(idxs[1]);
-    // ширина пары = H × r1×r2/(r1+r2)
     return Math.round((r1 * r2) / (r1 + r2) * GALLERY_H);
   };
 
-  const gridTemplateColumns = cols.map(c => `${colPx(c)}px`).join(' ');
+  const colWidths = cols.map(c => colPx(c));
 
   const cellFlex = (idxs, pos) => {
     if (idxs.length === 1) return 1;
@@ -167,9 +248,9 @@ function PhotoGallery({ photos, title }) {
     <>
       <div className="gallery-outer" ref={wrapRef}>
         <div className="gallery-wrap">
-          <div className="gallery-adaptive" style={{ gridTemplateColumns }}>
+          <div className="gallery-adaptive">
             {cols.map((idxs, ci) => (
-              <div key={ci} className="gallery-col">
+              <div key={ci} className="gallery-col" style={{ width: `${colWidths[ci]}px` }}>
                 {idxs.map((idx, pos) => (
                   <div
                     key={idx}
@@ -178,6 +259,13 @@ function PhotoGallery({ photos, title }) {
                     onClick={() => setLightboxIndex(idx)}
                   >
                     <img
+                      className="gallery-cell-bg"
+                      src={shown[idx]}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <img
+                      className="gallery-cell-img"
                       src={shown[idx]}
                       alt={`${title} фото ${idx + 1}`}
                       onLoad={e => onLoad(e, idx)}
@@ -262,7 +350,26 @@ export default function ExcursionDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [likeHint, setLikeHint] = useState(false);
+  const [likeError, setLikeError] = useState(null);
+
+  const photos = React.useMemo(
+    () => (excursion ? parsePhotos(excursion.photos) : []),
+    [excursion?.photos]
+  );
   const [reviews, setReviews] = useState([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Review form
+  const [myReview, setMyReview] = useState(undefined); // undefined = not loaded, null = no review
+  const [canReview, setCanReview] = useState(null);    // null = not checked yet
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewPros, setReviewPros] = useState("");
+  const [reviewCons, setReviewCons] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState(null);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
   const [availableDates, setAvailableDates] = useState(null);
   const [loadingDates, setLoadingDates] = useState(false);
@@ -273,6 +380,7 @@ export default function ExcursionDetailsPage() {
   const [bookingError, setBookingError] = useState(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [related, setRelated] = useState([]);
+  const [guideProfile, setGuideProfile] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -297,6 +405,22 @@ export default function ExcursionDetailsPage() {
     loadAvailableDates();
     loadRelated();
     loadReviews();
+    if (excursion.guide_id) {
+      getPublicGuideProfile(excursion.guide_id)
+        .then(setGuideProfile)
+        .catch(() => {});
+    }
+    if (token) {
+      checkFavorite(token, id)
+        .then((r) => setLiked(r.is_favorite))
+        .catch(() => {});
+      getMyReview(token, id)
+        .then((r) => setMyReview(r))
+        .catch(() => setMyReview(null));
+      canReviewExcursion(token, id)
+        .then((r) => setCanReview(r.can_review))
+        .catch(() => setCanReview(false));
+    }
   }, [excursion]);
 
   const loadAvailableDates = async () => {
@@ -352,7 +476,7 @@ export default function ExcursionDetailsPage() {
     if (!selectedTime) { setBookingError("Выберите время"); return; }
     setBookingError(null);
     setBookingMessage(null);
-    const dateTimeISO = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+    const dateTimeISO = `${selectedDate}T${selectedTime}:00`;
     try {
       const resp = await createBooking({ token, excursionId: Number(id), dateTimeISO, people: Number(people) || 1 });
       setBookingMessage(resp.message || "Экскурсия успешно забронирована");
@@ -364,11 +488,17 @@ export default function ExcursionDetailsPage() {
     }
   };
 
+  // Lock body scroll when all-reviews modal is open (must be before early returns)
+  React.useEffect(() => {
+    if (showAllReviews) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [showAllReviews]);
+
   if (loading) return <div className="details-loading-screen">Загружаем экскурсию...</div>;
   if (error) return <div className="details-loading-screen">Ошибка: {error}</div>;
   if (!excursion) return <div className="details-loading-screen">Экскурсия не найдена</div>;
-
-  const photos = parsePhotos(excursion.photos);
 
   const avgRating = excursion.avg_rating ?? null;
   const guideAvgRating = excursion.guide_avg_rating ?? avgRating;
@@ -383,14 +513,49 @@ export default function ExcursionDetailsPage() {
         {/* ── Header section ── */}
         <div className="details-intro">
           <div className="details-intro-top">
-            <span className="badge-recommend">Советуем</span>
-            <button
-              className={`btn-like${liked ? " btn-like--active" : ""}`}
-              onClick={() => setLiked((v) => !v)}
-              aria-label="В избранное"
-            >
-              {liked ? "♥" : "♡"}
-            </button>
+            {avgRating != null && avgRating >= 8 && (
+              <span className="badge-recommend">Советуем</span>
+            )}
+            <div className="btn-like-wrap">
+              <button
+                className={`btn-like${liked ? " btn-like--active" : ""}${likeLoading ? " btn-like--loading" : ""}${liked ? " btn-like--pop" : ""}`}
+                onClick={async () => {
+                  if (!token) {
+                    setLikeHint(true);
+                    setTimeout(() => setLikeHint(false), 2500);
+                    return;
+                  }
+                  if (likeLoading) return;
+                  setLikeLoading(true);
+                  setLikeError(null);
+                  try {
+                    if (liked) {
+                      await removeFavorite(token, Number(id));
+                      setLiked(false);
+                    } else {
+                      await addFavorite(token, Number(id));
+                      setLiked(true);
+                    }
+                  } catch (e) {
+                    setLikeError(e.message || "Ошибка");
+                    setTimeout(() => setLikeError(null), 3000);
+                  } finally {
+                    setLikeLoading(false);
+                  }
+                }}
+                aria-label={liked ? "Убрать из избранного" : "Добавить в избранное"}
+              >
+                <svg viewBox="0 0 24 24" width="28" height="28" className="btn-like-icon">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                </svg>
+              </button>
+              {likeHint && (
+                <div className="like-hint">Войдите, чтобы добавить в избранное</div>
+              )}
+              {likeError && (
+                <div className="like-hint like-hint--error">{likeError}</div>
+              )}
+            </div>
           </div>
 
           <div className="details-intro-body">
@@ -398,7 +563,7 @@ export default function ExcursionDetailsPage() {
               <h1 className="details-title">{excursion.title}</h1>
               <p className="details-subtitle">
                 {excursion.description
-                  ? excursion.description.slice(0, 160) + (excursion.description.length > 160 ? "…" : "")
+                  ? (excursion.short_description || plainText(excursion.description))
                   : `Авторская экскурсия по ${excursion.city}, ${excursion.country}`}
               </p>
               <div className="details-rating-row">
@@ -410,7 +575,7 @@ export default function ExcursionDetailsPage() {
                     {avgRating}
                   </span>
                 )}
-                {avgRating != null && <span className="details-rating-label">Превосходно</span>}
+                {avgRating != null && <span className="details-rating-label">{getRatingLabel(avgRating)}</span>}
                 <a href="#reviews" className="details-rating-count">{reviewsCount} оценок</a>
               </div>
             </div>
@@ -442,18 +607,7 @@ export default function ExcursionDetailsPage() {
           {/* Left: description */}
           <div className="details-description">
             <h2>Об экскурсии</h2>
-            <p>{excursion.description || "Описание экскурсии будет добавлено позже."}</p>
-
-            <h2>Организационные детали</h2>
-            <ul className="details-org-list">
-              <li>Пешеходная экскурсия без дополнительных расходов (посещение крыш свободное)</li>
-              <li>По желанию после экскурсии вы можете посетить интересные места на территории (вход — от 100 руб. с человека)</li>
-            </ul>
-
-            <h2>Место встречи</h2>
-            <p>
-              Начало экскурсии в районе ближайшей к месту проведения станции метро. Точное место встречи вы узнаете после внесения предоплаты.
-            </p>
+            {renderDescription(excursion.description)}
           </div>
 
           {/* Right: sidebar */}
@@ -476,19 +630,39 @@ export default function ExcursionDetailsPage() {
                 </div>
               </div>
               <div className="guide-card-stats">
-                <div className="guide-stat-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                  {reviewsCount > 0 ? `${reviewsCount} посетителей` : "посетителей"}
-                </div>
-                <div className="guide-stat-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  стаж 2 года
-                </div>
+                {excursion.guide_experience && (
+                  <div className="guide-stat-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    Стаж: {excursion.guide_experience}
+                  </div>
+                )}
+                {guideProfile?.total_clients > 0 && (
+                  <div className="guide-stat-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    {guideProfile.total_clients} посетителей
+                  </div>
+                )}
+                {(() => {
+                  const cnt = guideProfile?.reviews?.length ?? reviewsCount;
+                  return cnt > 0 ? (
+                    <div className="guide-stat-row">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      {cnt} {cnt === 1 ? "отзыв" : cnt < 5 ? "отзыва" : "отзывов"}
+                    </div>
+                  ) : null;
+                })()}
               </div>
-              <p className="guide-card-bio">
-                Здравствуйте! Меня зовут {excursion.guide_name?.split(" ")[0] || "Ваш гид"}. Гуляю по городу, проникаю в его историю, нахожу скрытые места и делюсь ими с путешественниками.
-              </p>
-              <button className="guide-all-btn">Все экскурсии гида</button>
+              {excursion.guide_bio && (
+                <p className="guide-card-bio">{excursion.guide_bio}</p>
+              )}
+              {excursion.guide_id && (
+                <button
+                  className="guide-all-btn"
+                  onClick={() => navigate(`/guides/${excursion.guide_id}`)}
+                >
+                  Все экскурсии гида
+                </button>
+              )}
             </div>
 
             {/* Tour details card */}
@@ -618,7 +792,7 @@ export default function ExcursionDetailsPage() {
 
           <div className="reviews-layout">
             <div className="reviews-list">
-              {reviews.length > 0 ? reviews.map((r) => {
+              {reviews.length > 0 ? reviews.slice(0, 3).map((r) => {
                 const [pros, cons] = r.comment
                   ? r.comment.split("\n---\n")
                   : ["Отличная экскурсия", null];
@@ -646,12 +820,16 @@ export default function ExcursionDetailsPage() {
               }) : (
                 <p className="details-loading">Отзывов пока нет</p>
               )}
-              <button className="reviews-all-btn">Все оценки</button>
+              {reviews.length > 3 && (
+                <button className="reviews-all-btn" onClick={() => setShowAllReviews(true)}>
+                  Все оценки · {reviews.length}
+                </button>
+              )}
             </div>
 
             {avgRating != null && (
               <div className="reviews-overall-card">
-                <strong className="reviews-overall-label">Превосходно</strong>
+                <strong className="reviews-overall-label">{getRatingLabel(avgRating)}</strong>
                 <span className="reviews-overall-badge" style={{ background: getRatingColor(avgRating) }}>
                   {avgRating}
                 </span>
@@ -659,7 +837,149 @@ export default function ExcursionDetailsPage() {
               </div>
             )}
           </div>
+
+          {/* Review form */}
+          {token && (
+            <div className="review-form-section">
+              {/* Already reviewed */}
+              {myReview != null && (
+                <div className="review-already-card">
+                  <span className="review-already-label">Ваш отзыв</span>
+                  <span className="review-already-badge" style={{ background: getRatingColor(myReview.rating) }}>
+                    {myReview.rating}
+                  </span>
+                  <p className="review-already-text">{myReview.comment?.split("\n---\n")[0] || "Отличная экскурсия"}</p>
+                </div>
+              )}
+
+              {/* Can't review yet */}
+              {myReview === null && canReview === false && (
+                <p className="review-not-eligible">
+                  Оставить отзыв можно после посещения экскурсии
+                </p>
+              )}
+
+              {/* Review form */}
+              {myReview === null && canReview === true && (
+                <>
+                  <h3 className="review-form-title">Оставить отзыв</h3>
+
+                  {/* 1–10 numeric scale */}
+                  <div className="review-scale">
+                    {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={`review-scale-btn${reviewStars === n ? " review-scale-btn--active" : ""}${reviewStars > 0 && n <= reviewStars ? " review-scale-btn--filled" : ""}`}
+                        onClick={() => setReviewStars(n)}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    {reviewStars > 0 && (
+                      <span className="review-scale-label">
+                        {getRatingLabel(reviewStars)} ({reviewStars}/10)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="review-form-fields">
+                    <textarea
+                      className="review-textarea"
+                      placeholder="Что понравилось..."
+                      value={reviewPros}
+                      onChange={(e) => setReviewPros(e.target.value)}
+                      rows={3}
+                    />
+                    <textarea
+                      className="review-textarea"
+                      placeholder="Минусы и пожелания (необязательно)..."
+                      value={reviewCons}
+                      onChange={(e) => setReviewCons(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  {reviewError && <p className="review-form-error">{reviewError}</p>}
+                  {reviewSuccess && <p className="review-form-success">Спасибо за отзыв!</p>}
+                  <button
+                    className="review-submit-btn"
+                    disabled={reviewSubmitting || reviewStars === 0}
+                    onClick={async () => {
+                      if (reviewStars === 0) { setReviewError("Выберите оценку"); return; }
+                      setReviewSubmitting(true);
+                      setReviewError(null);
+                      const comment = reviewCons.trim()
+                        ? `${reviewPros.trim()}\n---\n${reviewCons.trim()}`
+                        : reviewPros.trim() || null;
+                      try {
+                        const created = await submitReview(token, Number(id), reviewStars, comment);
+                        setMyReview(created);
+                        setCanReview(false);
+                        const newReviews = [created, ...reviews];
+                        setReviews(newReviews);
+                        const newAvg = Math.round(
+                          newReviews.reduce((s, r) => s + r.rating, 0) / newReviews.length * 10
+                        ) / 10;
+                        setExcursion((prev) => ({
+                          ...prev,
+                          avg_rating: newAvg,
+                          reviews_count: newReviews.length,
+                        }));
+                        setReviewSuccess(true);
+                      } catch (e) {
+                        setReviewError(e.message || "Не удалось отправить отзыв");
+                      } finally {
+                        setReviewSubmitting(false);
+                      }
+                    }}
+                  >
+                    {reviewSubmitting ? "Отправляем..." : "Отправить отзыв"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </section>
+
+        {/* ── All reviews modal ── */}
+        {showAllReviews && (
+          <div className="gallery-modal-overlay" onClick={() => setShowAllReviews(false)}>
+            <div className="gallery-modal-box reviews-modal-box" onClick={(e) => e.stopPropagation()}>
+              <div className="gallery-modal-header">
+                <span className="gallery-modal-title">Все отзывы · {reviews.length}</span>
+                <button className="gallery-modal-close" onClick={() => setShowAllReviews(false)}>×</button>
+              </div>
+              <div className="gallery-modal-scroll reviews-modal-scroll">
+                {reviews.map((r) => {
+                  const [pros, cons] = r.comment
+                    ? r.comment.split("\n---\n")
+                    : ["Отличная экскурсия", null];
+                  return (
+                    <div key={r.review_id} className="review-card">
+                      <div className="review-card-header">
+                        <div className="review-card-meta">
+                          <strong className="review-card-name">{r.client_name}</strong>
+                          <span className="review-card-subtitle">{excursion.title} • {r.date}</span>
+                        </div>
+                        <span className="review-card-badge" style={{ background: getRatingColor(r.rating) }}>
+                          {r.rating}
+                        </span>
+                      </div>
+                      <div className="review-card-pros">
+                        <img src={prosIcon} alt="+" className="review-icon" />
+                        {pros}
+                      </div>
+                      <div className="review-card-cons">
+                        <img src={consIcon} alt="-" className="review-icon" />
+                        {cons || "Минусов нет"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Related excursions ── */}
         {related.length > 0 && (

@@ -126,6 +126,31 @@
   text-align: left;
 }
 
+.booking-card-title--link {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.booking-card-title--link:hover { color: #1a73e8; }
+
+.booking-card-arrow {
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+}
+
+.booking-card-title--link:hover .booking-card-arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+.booking-card-image {
+  transition: opacity 0.15s;
+}
+
+.booking-card-image:hover { opacity: 0.92; }
+
 .booking-card-location {
   font-size: 16px;
   color: #666;
@@ -181,6 +206,11 @@
   font-weight: 600;
 }
 
+.booking-status-completed {
+  color: #1565c0;
+  font-weight: 600;
+}
+
 .booking-cancel-button {
   margin-top: auto;
   align-self: flex-start;
@@ -230,18 +260,32 @@
 @media (max-width: 600px) {
   .bookings-container {
     margin-top: 80px;
-    padding: 0 16px;
+    padding: 0 12px;
   }
 
   .bookings-title {
-    font-size: 24px;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .bookings-section-title {
+    font-size: 18px;
+    margin-bottom: 16px;
   }
 
   .booking-card-content {
-    padding: 16px;
+    padding: 14px;
   }
 
   .booking-card-title {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .booking-card-location {
+    font-size: 14px;
+  }
+
+  .booking-cancel-button {
+    width: 100%;
   }
 }
