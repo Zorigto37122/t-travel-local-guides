@@ -4,7 +4,7 @@
     height: 60px;
     background-color: #fff;
     margin: 0;
-    position: fixed;
+    position: sticky;
     top: 0;
     z-index: 1000;
 }

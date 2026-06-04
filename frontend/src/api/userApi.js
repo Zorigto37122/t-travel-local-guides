@@ -1,7 +1,4 @@
-// Определяем базовый URL API
-// Vite требует, чтобы переменные окружения начинались с VITE_
-// и были доступны через import.meta.env
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
 // Функция для перевода ошибок на русский язык
 export function translateError(errorMessage) {
@@ -116,15 +113,12 @@ export function translateError(errorMessage) {
   return errorMessage;
 }
 
-// Логируем используемый URL для отладки
-if (typeof window !== "undefined") {
-  console.log("API_BASE_URL:", API_BASE_URL);
-  console.log("VITE_API_URL env:", import.meta.env.VITE_API_URL);
-  console.log("Current hostname:", window.location.hostname);
-  console.log("Current origin:", window.location.origin);
-}
-
 export async function handleResponse(response) {
+  // Истёкший / недействительный токен → уведомляем AuthContext об автологауте
+  if (response.status === 401) {
+    window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+  }
+
   if (!response.ok) {
     let message = "Ошибка запроса";
     try {

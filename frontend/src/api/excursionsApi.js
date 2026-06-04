@@ -13,26 +13,17 @@ export async function searchExcursions({ country, city, date, people, hasChildre
 }
 
 let _locationsCache = null;
+let _locationsCacheTime = 0;
+const LOCATIONS_CACHE_TTL = 5 * 60 * 1000; // 5 минут
 
 export async function getAllLocations() {
-  if (_locationsCache) return _locationsCache;
-  const response = await fetch(`${API_BASE_URL}/api/excursions`);
-  const excursions = await handleResponse(response);
-  const countriesSet = new Set();
-  const citiesByCountry = {};
-  excursions.forEach(({ country, city }) => {
-    if (country) countriesSet.add(country);
-    if (country && city) {
-      if (!citiesByCountry[country]) citiesByCountry[country] = new Set();
-      citiesByCountry[country].add(city);
-    }
-  });
-  _locationsCache = {
-    countries: [...countriesSet].sort(),
-    citiesByCountry: Object.fromEntries(
-      Object.entries(citiesByCountry).map(([k, v]) => [k, [...v].sort()])
-    ),
-  };
+  const now = Date.now();
+  if (_locationsCache && now - _locationsCacheTime < LOCATIONS_CACHE_TTL) {
+    return _locationsCache;
+  }
+  const response = await fetch(`${API_BASE_URL}/api/locations`);
+  _locationsCache = await handleResponse(response);
+  _locationsCacheTime = now;
   return _locationsCache;
 }
 
@@ -72,8 +63,6 @@ export async function getAvailableDates(excursionId, people = 1) {
 
 export async function createBooking({ token, excursionId, dateTimeISO, people }) {
   try {
-    console.log("Creating booking:", { API_BASE_URL, excursionId, dateTimeISO, people });
-
     const response = await fetch(`${API_BASE_URL}/api/bookings`, {
       method: "POST",
       headers: {
@@ -88,10 +77,8 @@ export async function createBooking({ token, excursionId, dateTimeISO, people })
       }),
     });
 
-    console.log("Booking response status:", response.status);
     return handleResponse(response);
   } catch (error) {
-    console.error("Booking error:", error);
     if (error instanceof TypeError) {
       if (error.message === "Failed to fetch") {
         throw new Error(

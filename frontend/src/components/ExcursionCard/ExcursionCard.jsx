@@ -47,7 +47,7 @@ const ExcursionCard = ({
         if (photoArray.length === 0) return null;
         const first = photoArray[0].trim();
         if (first.startsWith('data:image') || first.startsWith('http')) return first;
-        return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${first}`;
+        return `${import.meta.env.VITE_API_URL ?? ""}${first}`;
     };
 
     const cardImage = getCardImage();
@@ -55,7 +55,7 @@ const ExcursionCard = ({
     const getAvatarUrl = (avatar) => {
         if (!avatar) return null;
         if (avatar.startsWith('data:') || avatar.startsWith('http')) return avatar;
-        return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${avatar}`;
+        return `${import.meta.env.VITE_API_URL ?? ""}${avatar}`;
     };
     const avatarUrl = getAvatarUrl(cardGuide.avatar);
     const hasRating = rating !== null && rating !== undefined;

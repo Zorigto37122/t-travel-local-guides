@@ -2,14 +2,18 @@ from datetime import datetime, date, timezone
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, Boolean
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, Boolean, UniqueConstraint
 
 class Base(DeclarativeBase):
     pass
 
 class Excursion(Base):
     __tablename__ = "excursions"
-    
+    __table_args__ = (
+        Index("ix_excursions_status", "status"),
+        Index("ix_excursions_city", "city"),
+    )
+
     excursion_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title : Mapped[str] = mapped_column(String(200), nullable=False)
     country: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -44,7 +48,13 @@ class Excursion(Base):
 
 class Booking(Base):
     __tablename__ = "bookings"
-    
+    __table_args__ = (
+        Index("ix_bookings_excursion_id", "excursion_id"),
+        Index("ix_bookings_client_id", "client_id"),
+        Index("ix_bookings_date", "date"),
+        Index("ix_bookings_status", "status"),
+    )
+
     booking_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     number_of_people: Mapped[int] = mapped_column(Integer, nullable=False) 
@@ -167,7 +177,11 @@ class Notification(Base):
     
 class Review(Base):
     __tablename__ = "reviews"
-    
+    __table_args__ = (
+        Index("ix_reviews_excursion_id", "excursion_id"),
+        Index("ix_reviews_client_id", "client_id"),
+    )
+
     review_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"), nullable=False)
     excursion_id: Mapped[int] = mapped_column(ForeignKey("excursions.excursion_id"), nullable=False)
@@ -183,11 +197,20 @@ class Review(Base):
 
 class Favorite(Base):
     __tablename__ = "favorites"
+    __table_args__ = (
+        UniqueConstraint("client_id", "excursion_id", name="uq_favorites_client_excursion"),
+        Index("ix_favorites_client_id", "client_id"),
+        Index("ix_favorites_excursion_id", "excursion_id"),
+    )
 
     favorite_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     client_id: Mapped[int] = mapped_column(Integer, ForeignKey("clients.client_id"), nullable=False)
     excursion_id: Mapped[int] = mapped_column(Integer, ForeignKey("excursions.excursion_id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+    )
 
     client: Mapped["Client"] = relationship(back_populates="favorites")
     excursion: Mapped["Excursion"] = relationship(back_populates="favorites")
@@ -196,6 +219,9 @@ class Favorite(Base):
 class ExcursionAvailability(Base):
     """Повторяющееся недельное правило: в какие дни недели и время гид проводит экскурсию."""
     __tablename__ = "excursion_availability"
+    __table_args__ = (
+        Index("ix_excursion_availability_excursion_id", "excursion_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     excursion_id: Mapped[int] = mapped_column(
@@ -211,6 +237,9 @@ class ExcursionAvailability(Base):
 class ExcursionSlot(Base):
     """Разовый слот: конкретная дата и время, когда гид может провести экскурсию."""
     __tablename__ = "excursion_slots"
+    __table_args__ = (
+        Index("ix_excursion_slots_excursion_id", "excursion_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     excursion_id: Mapped[int] = mapped_column(

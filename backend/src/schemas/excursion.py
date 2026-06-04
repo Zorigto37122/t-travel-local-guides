@@ -24,6 +24,23 @@ class ExcursionCreate(ExcursionBase):
     pass
 
 
+class ExcursionUpdate(BaseModel):
+    """Схема для частичного обновления экскурсии (все поля опциональны)."""
+    title: Optional[str] = None
+    country: Optional[str] = None
+    city: Optional[str] = None
+    difficulty: Optional[str] = None
+    short_description: Optional[str] = None
+    description: Optional[str] = None
+    photos: Optional[str] = None
+    price_per_person: Optional[float] = None
+    accepted_payment_methods: Optional[str] = None
+    available_slots: Optional[int] = Field(default=None, ge=0)
+    transport: Optional[str] = None
+    duration: Optional[str] = None
+    price_type: Optional[str] = None
+
+
 class ExcursionRead(ExcursionBase):
     excursion_id: int
     status: str

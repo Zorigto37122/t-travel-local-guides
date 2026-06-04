@@ -2,7 +2,7 @@ import React from "react";
 import { adminGetGuides } from "../../api/userApi";
 import { useAsync, SectionHeader, StateWrap } from "./adminShared";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 function avatarUrl(photo) {
   if (!photo) return null;

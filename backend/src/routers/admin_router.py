@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.auth import fastapi_users
@@ -112,33 +112,27 @@ async def list_pending_guides(
     admin_user: User = Depends(current_active_superuser),
     session: AsyncSession = Depends(get_session),
 ) -> List[AdminGuideWithUser]:
-    """Получить список пользователей, ожидающих одобрения как гиды"""
-    # Находим пользователей с is_guide=True, но без записи в таблице guides
-    users_result = await session.execute(
-        select(User).where(User.is_guide == True)
+    """Пользователи с is_guide=True, ещё не получившие запись в таблице guides."""
+    result = await session.execute(
+        select(User).where(
+            User.is_guide == True,
+            ~exists(select(Guide.guide_id).where(Guide.user_id == User.id)),
+        )
     )
-    all_guide_users = users_result.scalars().all()
-    
-    # Получаем всех одобренных гидов
-    guides_result = await session.execute(select(Guide))
-    approved_guides = {g.user_id for g in guides_result.scalars().all()}
-    
-    # Фильтруем тех, кто еще не одобрен
-    pending_users = [u for u in all_guide_users if u.id not in approved_guides]
-    
-    pending_list = []
-    for user in pending_users:
-        pending_list.append(AdminGuideWithUser(
-            guide_id=0,  # Временный ID, так как записи еще нет
+    pending_users = result.scalars().all()
+
+    return [
+        AdminGuideWithUser(
+            guide_id=0,
             user_id=user.id,
             photo=None,
             user_name=user.name,
             user_email=user.email,
             user_phone=user.phone,
             is_guide_approved=False,
-        ))
-    
-    return pending_list
+        )
+        for user in pending_users
+    ]
 
 
 @router.post("/guides/{user_id}/approve")

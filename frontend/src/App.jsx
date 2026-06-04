@@ -1,17 +1,17 @@
 
 import { lazy, Suspense, useEffect, useState } from "react";
 import "./App.css";
-import HomePage from "./pages/HomePage";
-import SearchPage from "./pages/SearchPage";
-import ExcursionDetailsPage from "./pages/ExcursionDetailsPage";
-import ProfilePage from "./pages/ProfilePage";
-import BookingsPage from "./pages/BookingsPage";
-import GuideDashboard from "./pages/GuideDashboard";
-import ExcursionForm from "./pages/ExcursionForm";
-import GuideCalendar from "./pages/GuideCalendar";
-import GuideSchedule from "./pages/GuideSchedule";
-import GuidePage from "./pages/GuidePage";
-import FavoritesPage from "./pages/FavoritesPage";
+import HomePage from "./pages/HomePage/HomePage";
+import SearchPage from "./pages/SearchPage/SearchPage";
+import ExcursionDetailsPage from "./pages/ExcursionDetailsPage/ExcursionDetailsPage";
+import ProfilePage from "./pages/ProfilePage/ProfilePage";
+import BookingsPage from "./pages/BookingsPage/BookingsPage";
+import GuideDashboard from "./pages/GuideDashboard/GuideDashboard";
+import ExcursionForm from "./pages/ExcursionForm/ExcursionForm";
+import GuideCalendar from "./pages/GuideCalendar/GuideCalendar";
+import GuideSchedule from "./pages/GuideSchedule/GuideSchedule";
+import GuidePage from "./pages/GuidePage/GuidePage";
+import FavoritesPage from "./pages/FavoritesPage/FavoritesPage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import { useAuth } from "./AuthContext";

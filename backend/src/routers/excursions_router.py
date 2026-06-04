@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, date, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func
+from sqlalchemy import select, func, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.auth import fastapi_users
@@ -31,6 +31,7 @@ from src.schemas.excursion import (
     ReviewCreate,
     ReviewRead,
 )
+from src.utils import enrich_excursion_photos
 
 
 router = APIRouter(prefix="/api", tags=["excursions"])
@@ -100,8 +101,8 @@ def _generate_offered_slots(rules, extra, days: int = 30) -> dict:
     Возвращает dict[(date_iso, "HH:MM")] -> capacity (None = взять из excursion.available_slots).
     Прошедшее сегодня время пропускается.
     """
-    today = datetime.now().date()
-    now_time = datetime.now().strftime("%H:%M")
+    today = datetime.now(timezone.utc).date()
+    now_time = datetime.now(timezone.utc).strftime("%H:%M")
     end_date = today + timedelta(days=days)
 
     rules_by_weekday: dict[int, list] = {}
@@ -116,7 +117,6 @@ def _generate_offered_slots(rules, extra, days: int = 30) -> dict:
                 continue
             offered[(d.isoformat(), r.time)] = r.capacity
 
-    # Разовые слоты перекрывают capacity недельного правила в тот же день/время
     for s in extra:
         if not (today <= s.slot_date < end_date):
             continue
@@ -127,6 +127,39 @@ def _generate_offered_slots(rules, extra, days: int = 30) -> dict:
     return offered
 
 
+# ── Locations ─────────────────────────────────────────────────────────────────
+
+@router.get("/locations")
+async def get_locations(
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Уникальные страны и города одобренных экскурсий (для автодополнения)."""
+    result = await session.execute(
+        select(Excursion.country, Excursion.city)
+        .where(Excursion.status == "approved")
+        .distinct()
+        .order_by(Excursion.country, Excursion.city)
+    )
+    rows = result.all()
+
+    countries_set: set[str] = set()
+    cities_by_country: dict[str, list[str]] = {}
+    for country, city in rows:
+        if country:
+            countries_set.add(country)
+        if country and city:
+            cities_by_country.setdefault(country, [])
+            if city not in cities_by_country[country]:
+                cities_by_country[country].append(city)
+
+    return {
+        "countries": sorted(countries_set),
+        "citiesByCountry": {k: sorted(v) for k, v in cities_by_country.items()},
+    }
+
+
+# ── Excursions search ─────────────────────────────────────────────────────────
+
 @router.get("/excursions", response_model=List[ExcursionCardRead])
 async def search_excursions(
     country: Optional[str] = Query(default=None),
@@ -134,6 +167,8 @@ async def search_excursions(
     date: Optional[str] = Query(default=None),
     people: int = Query(default=1, ge=1),
     has_children: bool = Query(default=False),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     session: AsyncSession = Depends(get_session),
 ) -> List[ExcursionCardRead]:
     query = (
@@ -162,11 +197,50 @@ async def search_excursions(
         (Excursion.available_slots.is_(None)) | (Excursion.available_slots >= people)
     )
 
+    # Фильтр по дате: экскурсии, у которых есть слот на выбранный день
+    if date:
+        try:
+            filter_date = datetime.strptime(date[:10], "%Y-%m-%d").date()
+            weekday = filter_date.weekday()  # 0=Пн..6=Вс
+
+            # Экскурсии без расписания — всегда доступны (legacy)
+            has_any_schedule = exists(
+                select(ExcursionAvailability.id).where(
+                    ExcursionAvailability.excursion_id == Excursion.excursion_id
+                )
+            ) | exists(
+                select(ExcursionSlot.id).where(
+                    ExcursionSlot.excursion_id == Excursion.excursion_id
+                )
+            )
+
+            has_weekday_rule = exists(
+                select(ExcursionAvailability.id).where(
+                    ExcursionAvailability.excursion_id == Excursion.excursion_id,
+                    ExcursionAvailability.weekday == weekday,
+                )
+            )
+
+            has_date_slot = exists(
+                select(ExcursionSlot.id).where(
+                    ExcursionSlot.excursion_id == Excursion.excursion_id,
+                    ExcursionSlot.slot_date == filter_date,
+                )
+            )
+
+            query = query.where(~has_any_schedule | has_weekday_rule | has_date_slot)
+        except (ValueError, AttributeError):
+            pass  # Некорректный формат даты — игнорируем фильтр
+
+    query = query.offset(offset).limit(limit)
+
     result = await session.execute(query)
     rows = result.all()
 
-    from src.utils import enrich_excursion_photos
-    return [_build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city)) for row in rows]
+    return [
+        _build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city))
+        for row in rows
+    ]
 
 
 @router.get("/excursions/{excursion_id}", response_model=ExcursionCardRead)
@@ -195,7 +269,6 @@ async def get_excursion_by_id(
     row = result.one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail="Экскурсия не найдена")
-    from src.utils import enrich_excursion_photos
     photos = enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city)
     return _build_card(row, photos)
 
@@ -232,17 +305,14 @@ async def get_available_dates(
     people: int = Query(default=1, ge=1),
     session: AsyncSession = Depends(get_session),
 ) -> AvailableDatesResponse:
-    """
-    Получить доступные даты и время для экскурсии на ближайшие 30 дней.
-    """
+    """Получить доступные даты и время для экскурсии на ближайшие 30 дней."""
     excursion = await session.get(Excursion, excursion_id)
     if excursion is None or excursion.status != "approved":
         raise HTTPException(status_code=404, detail="Экскурсия не найдена или недоступна")
 
-    today = datetime.now().date()
+    today = datetime.now(timezone.utc).date()
     end_date = today + timedelta(days=30)
 
-    # Существующие бронирования на ближайшие 30 дней → занятые места по (дата, "HH:MM")
     bookings_query = select(Booking).where(
         Booking.excursion_id == excursion_id,
         func.date(Booking.date) >= today,
@@ -271,14 +341,12 @@ async def get_available_dates(
     rules, extra = await _load_schedule(session, excursion_id)
 
     if rules or extra:
-        # Гид задал расписание — показываем только заданные слоты
         offered = _generate_offered_slots(rules, extra, days=30)
         available_time_slots = [
             _make_slot(date_str, time_str, cap if cap is not None else excursion.available_slots)
             for (date_str, time_str), cap in sorted(offered.items())
         ]
     else:
-        # Расписание не задано — легаси-слоты на каждый день (совместимость с seed-данными)
         time_slots_list = ["09:00", "12:00", "15:00", "18:00"]
         available_time_slots = [
             _make_slot((today + timedelta(days=offset)).isoformat(), time_str, excursion.available_slots)
@@ -303,11 +371,7 @@ async def create_excursion_for_guide(
     user=Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> ExcursionRead:
-    """
-    Создание экскурсии гидом.
-    Экскурсия попадает в статус `pending_review` и требует одобрения модератором.
-    """
-    # требуем одобренный профиль гида (без авто-создания — проходит модерацию)
+    """Создание экскурсии гидом. Попадает в статус pending_review."""
     guide_result = await session.execute(
         select(Guide).where(Guide.user_id == user.id)
     )
@@ -323,12 +387,16 @@ async def create_excursion_for_guide(
         country=data.country,
         city=data.city,
         difficulty=data.difficulty,
+        short_description=data.short_description,
         description=data.description,
         photos=data.photos,
         price_per_person=data.price_per_person,
         accepted_payment_methods=data.accepted_payment_methods,
         status="pending_review",
         available_slots=data.available_slots,
+        transport=data.transport,
+        duration=data.duration,
+        price_type=data.price_type,
         guide_id=guide.guide_id,
     )
     session.add(excursion)
@@ -345,9 +413,6 @@ async def list_excursions_for_moderation(
     user=Depends(current_active_superuser),
     session: AsyncSession = Depends(get_session),
 ) -> List[ExcursionRead]:
-    """
-    Список экскурсий, ожидающих модерации.
-    """
     result = await session.execute(
         select(Excursion).where(Excursion.status == "pending_review")
     )
@@ -363,16 +428,12 @@ async def approve_excursion(
     user=Depends(current_active_superuser),
     session: AsyncSession = Depends(get_session),
 ) -> ExcursionRead:
-    """
-    Одобрить экскурсию модератором.
-    """
-    from src.models import Moderator  # локальный импорт, чтобы избежать циклов
+    from src.models import Moderator
 
     excursion = await session.get(Excursion, excursion_id)
     if excursion is None:
         raise HTTPException(status_code=404, detail="Экскурсия не найдена")
 
-    # гарантия профиля модератора
     moderator_result = await session.execute(
         select(Moderator).where(Moderator.user_id == user.id)
     )
@@ -399,28 +460,21 @@ async def create_booking(
     user=Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> BookingResponse:
-    """
-    Бронирование экскурсии.
-    При нехватке мест возвращает 400.
-    """
+    """Бронирование экскурсии. При нехватке мест возвращает 400."""
     excursion = await session.get(Excursion, data.excursion_id)
     if excursion is None or excursion.status != "approved":
         raise HTTPException(
-            status_code=404, 
+            status_code=404,
             detail="Экскурсия недоступна для бронирования"
         )
 
-    # Нормализуем datetime к UTC и убираем timezone для совместимости с БД
     booking_datetime = data.date
     if booking_datetime.tzinfo is not None:
-        # Если datetime имеет timezone, конвертируем в UTC и убираем timezone
         booking_datetime = booking_datetime.astimezone(timezone.utc).replace(tzinfo=None)
-    # Если datetime без timezone, предполагаем что это уже UTC и используем как есть
 
     booking_date = booking_datetime.date()
     booking_time = booking_datetime.strftime("%H:%M")
 
-    # Если гид задал расписание — выбранные дата+время должны в него входить
     rules, extra = await _load_schedule(session, excursion.excursion_id)
     if rules or extra:
         offered = _generate_offered_slots(rules, extra, days=30)
@@ -435,7 +489,6 @@ async def create_booking(
     else:
         effective_capacity = excursion.available_slots
 
-    # Проверяем доступность мест на выбранную дату+время
     if effective_capacity is not None:
         existing_bookings = (await session.execute(
             select(Booking).where(
@@ -454,7 +507,6 @@ async def create_booking(
                 detail="На выбранную дату и время нет свободных мест",
             )
 
-    # гарантируем профиль клиента
     client_result = await session.execute(
         select(Client).where(Client.user_id == user.id)
     )
@@ -464,7 +516,6 @@ async def create_booking(
         session.add(client)
         await session.flush()
 
-    # создаём оплату и бронирование
     total_amount = float(excursion.price_per_person) * data.number_of_people
     payment = Payment(
         amount=total_amount,
@@ -483,10 +534,6 @@ async def create_booking(
         payment_id=payment.id,
     )
     session.add(booking)
-
-    # Не уменьшаем available_slots глобально, так как проверяем по дате/времени
-    # Это позволяет иметь разные доступные слоты для разных дат/времени
-
     await session.commit()
     await session.refresh(booking)
 
@@ -504,26 +551,19 @@ async def get_my_bookings(
     user=Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> List[BookingWithExcursion]:
-    """
-    Получить все бронирования текущего пользователя.
-    """
-    # Получаем профиль клиента
     client_result = await session.execute(
         select(Client).where(Client.user_id == user.id)
     )
     client = client_result.scalar_one_or_none()
-    
     if client is None:
         return []
-    
-    # Получаем все бронирования клиента с информацией об экскурсиях
+
     bookings_query = (
         select(Booking, Excursion)
         .join(Excursion, Booking.excursion_id == Excursion.excursion_id)
         .where(Booking.client_id == client.client_id)
         .order_by(Booking.date.desc())
     )
-    
     result = await session.execute(bookings_query)
     bookings_data = result.all()
 
@@ -531,7 +571,6 @@ async def get_my_bookings(
     needs_commit = False
     bookings_list = []
     for booking, excursion in bookings_data:
-        # Auto-complete confirmed bookings whose date has passed
         if booking.status == "confirmed" and booking.date < now:
             booking.status = "completed"
             needs_commit = True
@@ -569,58 +608,32 @@ async def cancel_booking(
     user=Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> BookingWithExcursion:
-    """
-    Отменить бронирование.
-    """
-    # Получаем профиль клиента
     client_result = await session.execute(
         select(Client).where(Client.user_id == user.id)
     )
     client = client_result.scalar_one_or_none()
-    
     if client is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Профиль клиента не найден"
-        )
-    
-    # Получаем бронирование
+        raise HTTPException(status_code=404, detail="Профиль клиента не найден")
+
     booking = await session.get(Booking, booking_id)
     if booking is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Бронирование не найдено"
-        )
-    
-    # Проверяем, что бронирование принадлежит текущему пользователю
+        raise HTTPException(status_code=404, detail="Бронирование не найдено")
+
     if booking.client_id != client.client_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Нет доступа к этому бронированию"
-        )
-    
-    # Проверяем, что бронирование можно отменить
+        raise HTTPException(status_code=403, detail="Нет доступа к этому бронированию")
+
     if booking.status == "cancelled":
-        raise HTTPException(
-            status_code=400,
-            detail="Бронирование уже отменено"
-        )
-    
-    # Отменяем бронирование
+        raise HTTPException(status_code=400, detail="Бронирование уже отменено")
+
     booking.status = "cancelled"
     await session.commit()
     await session.refresh(booking)
-    
-    # Получаем информацию об экскурсии
+
     excursion = await session.get(Excursion, booking.excursion_id)
     if excursion is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Экскурсия не найдена"
-        )
-    
+        raise HTTPException(status_code=404, detail="Экскурсия не найдена")
+
     total_amount = float(excursion.price_per_person) * booking.number_of_people
-    
     return BookingWithExcursion(
         booking_id=booking.booking_id,
         excursion_id=booking.excursion_id,
@@ -637,7 +650,7 @@ async def cancel_booking(
     )
 
 
-# ── Reviews ──────────────────────────────────────────────────────────────────
+# ── Reviews ───────────────────────────────────────────────────────────────────
 
 @router.get("/excursions/{excursion_id}/can-review")
 async def can_review_excursion(
@@ -645,8 +658,7 @@ async def can_review_excursion(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    user_id = user.id
-    client_result = await session.execute(select(Client).where(Client.user_id == user_id))
+    client_result = await session.execute(select(Client).where(Client.user_id == user.id))
     client = client_result.scalar_one_or_none()
     if client is None:
         return {"can_review": False}
@@ -669,9 +681,7 @@ async def can_review_excursion(
             Review.excursion_id == excursion_id,
         )
     )
-    return {
-        "can_review": existing.scalar_one_or_none() is None,
-    }
+    return {"can_review": existing.scalar_one_or_none() is None}
 
 
 @router.post("/reviews", response_model=ReviewRead, status_code=status.HTTP_201_CREATED)
@@ -680,9 +690,8 @@ async def submit_review(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewRead:
-    user_id = user.id
-    user_name = user.name  # cache before session commits (avoids DetachedInstanceError)
-    client_result = await session.execute(select(Client).where(Client.user_id == user_id))
+    user_name = user.name
+    client_result = await session.execute(select(Client).where(Client.user_id == user.id))
     client = client_result.scalar_one_or_none()
     if client is None:
         raise HTTPException(status_code=400, detail="У вас нет завершённых бронирований")
@@ -731,9 +740,8 @@ async def get_my_review(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> Optional[ReviewRead]:
-    user_id = user.id
     user_name = user.name
-    client_result = await session.execute(select(Client).where(Client.user_id == user_id))
+    client_result = await session.execute(select(Client).where(Client.user_id == user.id))
     client = client_result.scalar_one_or_none()
     if client is None:
         return None
@@ -770,17 +778,17 @@ async def get_my_favorites(
     fav_result = await session.execute(
         select(Favorite.excursion_id).where(Favorite.client_id == client.client_id)
     )
-    excursion_ids = [r for r in fav_result.scalars().all()]
+    excursion_ids = fav_result.scalars().all()
     if not excursion_ids:
         return []
 
-    from src.utils import enrich_excursion_photos
     query = (
         select(
             Excursion,
             User.name.label("guide_name"),
             Guide.photo.label("guide_avatar"),
             Guide.bio.label("guide_bio"),
+            Guide.experience.label("guide_experience"),
             func.avg(Review.rating).label("avg_rating"),
             func.count(Review.review_id).label("reviews_count"),
             _guide_avg_subquery().label("guide_avg_rating"),
@@ -789,11 +797,14 @@ async def get_my_favorites(
         .join(User, Guide.user_id == User.id)
         .outerjoin(Review, Review.excursion_id == Excursion.excursion_id)
         .where(Excursion.excursion_id.in_(excursion_ids))
-        .group_by(Excursion.excursion_id, User.name, Guide.photo, Guide.bio, Guide.guide_id)
+        .group_by(Excursion.excursion_id, User.name, Guide.photo, Guide.bio, Guide.experience, Guide.guide_id)
     )
     result = await session.execute(query)
     rows = result.all()
-    return [_build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city)) for row in rows]
+    return [
+        _build_card(row, enrich_excursion_photos(row.Excursion.photos, row.Excursion.title, row.Excursion.city))
+        for row in rows
+    ]
 
 
 @router.post("/favorites", status_code=status.HTTP_201_CREATED)
