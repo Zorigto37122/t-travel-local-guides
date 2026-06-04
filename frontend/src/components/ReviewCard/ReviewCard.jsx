@@ -16,14 +16,18 @@ export default function ReviewCard({ clientName, subtitle, rating, pros, cons })
           {rating}
         </span>
       </div>
-      <div className="review-card-pros">
-        <img src={prosIcon} alt="+" className="review-icon" />
-        {pros || "Без комментария"}
-      </div>
-      <div className="review-card-cons">
-        <img src={consIcon} alt="-" className="review-icon" />
-        {cons || "Минусов нет"}
-      </div>
+      {pros && (
+        <div className="review-card-pros">
+          <img src={prosIcon} alt="+" className="review-icon" />
+          {pros}
+        </div>
+      )}
+      {cons && (
+        <div className="review-card-cons">
+          <img src={consIcon} alt="-" className="review-icon" />
+          {cons}
+        </div>
+      )}
     </div>
   );
 }
